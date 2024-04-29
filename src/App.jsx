@@ -1,21 +1,21 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import './App.css'
-import SketchCanvas from './components/SketchCanvas'
-import constants from './constants'
+import './App.css';
+import SketchCanvas from './components/SketchCanvas';
+import constants from './constants';
 import Menu from './components/Menu';
 import GameOver from './components/GameOver';
 import Countdown from './components/Countdown';
+import { AnimatePresence } from 'framer-motion';
 
-import { AnimatePresence } from 'framer-motion'
-
+// Function to format time as "minutes:seconds"
 const formatTime = (seconds) => {
   seconds = Math.floor(seconds);
   const minutes = Math.floor(seconds / 60);
   const secs = seconds % 60;
-  return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
-}
+  return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+};
 
-// https://stackoverflow.com/a/12646864/13989043
+// Function to shuffle an array randomly
 function shuffleArray(array) {
   for (let i = array.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -24,147 +24,138 @@ function shuffleArray(array) {
 }
 
 function App() {
+  // Variables to store different states of the game
+  const [ready, setReady] = useState(false); // Indicates if the game is ready to start
+  const [gameState, setGameState] = useState('menu'); // Keeps track of the current state of the game (menu, loading, countdown, playing, end)
+  const [countdown, setCountdown] = useState(constants.COUNTDOWN_TIMER); // Stores the countdown timer value
+  const [gameCurrentTime, setGameCurrentTime] = useState(null); // Stores the current time during the game
+  const [gameStartTime, setGameStartTime] = useState(null); // Stores the start time of the game
+  const [output, setOutput] = useState(null); // Stores the output from the machine learning model
+  const [isPredicting, setIsPredicting] = useState(false); // Indicates if the model is currently making a prediction
+  const [sketchHasChanged, setSketchHasChanged] = useState(false); // Indicates if the player's sketch has changed
+  const [targets, setTargets] = useState(null); // Stores the list of target words for the player to draw
+  const [targetIndex, setTargetIndex] = useState(0); // Keeps track of the current target word index
+  const [predictions, setPredictions] = useState([]); // Stores the history of predictions made during the game
 
-  // Model loading
-  const [ready, setReady] = useState(false);
-
-  // Game state
-  const [gameState, setGameState] = useState('menu');
-  const [countdown, setCountdown] = useState(constants.COUNTDOWN_TIMER);
-  const [gameCurrentTime, setGameCurrentTime] = useState(null);
-  const [gameStartTime, setGameStartTime] = useState(null);
-  const [output, setOutput] = useState(null);
-  const [isPredicting, setIsPredicting] = useState(false);
-  const [sketchHasChanged, setSketchHasChanged] = useState(false);
-
-  // What the user must sketch
-  const [targets, setTargets] = useState(null);
-  const [targetIndex, setTargetIndex] = useState(0);
-  const [predictions, setPredictions] = useState([]);
-
-  // Create a reference to the worker object.
+  // Reference to the worker that runs the machine learning model
   const worker = useRef(null);
 
-  // We use the `useEffect` hook to setup the worker as soon as the `App` component is mounted.
+  // Reference to the SketchCanvas component
+  const canvasRef = useRef(null);
+
+  // Set up the worker when the component is first loaded
   useEffect(() => {
     if (!worker.current) {
-      // Create the worker if it does not yet exist.
+      // Create a new worker if it doesn't exist
       worker.current = new Worker(new URL('./worker.js', import.meta.url), {
-        type: 'module'
+        type: 'module',
       });
     }
 
-    // Create a callback function for messages from the worker thread.
+    // Function to handle messages received from the worker
     const onMessageReceived = (e) => {
       const result = e.data;
 
       switch (result.status) {
-
         case 'ready':
-          // Pipeline ready: the worker is ready to accept messages.
+          // When the worker is ready, set the game as ready and start the countdown
           setReady(true);
           beginCountdown();
           break;
 
         case 'update':
-          // Generation update: update the output text.
+          // Not used in this code, but can be used for real-time updates from the worker
           break;
 
         case 'result':
-          // TODO optimize:
-
+          // When the worker sends a prediction result
           setIsPredicting(false);
 
-          {
-            const filteredResult = result.data.filter(x => !constants.BANNED_LABELS.includes(x.label));
-            const timespent = canvasRef.current.getTimeSpentDrawing();
-
-            // Slowly start rejecting labels that are not the target
-            const applyEasyMode = timespent - constants.REJECT_TIME_DELAY;
-            if (applyEasyMode > 0 && filteredResult[0].score > constants.START_REJECT_THRESHOLD) {
-
-              // The number of labels to reject
-              let amount = applyEasyMode / constants.REJECT_TIME_PER_LABEL;
-
-              for (let i = 0; i < filteredResult.length && i < amount + 1; ++i) {
-                if (filteredResult[i].label === targets[targetIndex]) {
-                  // The target label should not be rejected
-                  continue;
-                }
-                if (amount > i) {
-                  filteredResult[i].score = 0;
-                } else {
-                  // fractional amount
-                  filteredResult[i].score *= (i - amount);
-                }
+          // Filter out any banned labels and adjust the scores based on game settings
+          const filteredResult = result.data.filter(
+            (x) => !constants.BANNED_LABELS.includes(x.label)
+          );
+          const timespent = canvasRef.current.getTimeSpentDrawing();
+          const applyEasyMode = timespent - constants.REJECT_TIME_DELAY;
+          if (applyEasyMode > 0 && filteredResult[0].score > constants.START_REJECT_THRESHOLD) {
+            let amount = applyEasyMode / constants.REJECT_TIME_PER_LABEL;
+            for (let i = 0; i < filteredResult.length && i < amount + 1; ++i) {
+              if (filteredResult[i].label === targets[targetIndex]) {
+                continue;
               }
-
-              // sort again
-              filteredResult.sort((a, b) => b.score - a.score);
+              if (amount > i) {
+                filteredResult[i].score = 0;
+              } else {
+                filteredResult[i].score *= i - amount;
+              }
             }
-
-            // Normalize to be a probability distribution
-            const sum = filteredResult.reduce((acc, x) => acc + x.score, 0);
-            filteredResult.forEach(x => x.score /= sum);
-
-            setOutput(filteredResult);
+            filteredResult.sort((a, b) => b.score - a.score);
           }
+
+          // Normalize the scores to add up to 1
+          const sum = filteredResult.reduce((acc, x) => acc + x.score, 0);
+          filteredResult.forEach((x) => (x.score /= sum));
+
+          setOutput(filteredResult);
           break;
       }
     };
 
-    // Attach the callback function as an event listener.
+    // Listen for messages from the worker
     worker.current.addEventListener('message', onMessageReceived);
-    // worker.current.addEventListener('error', alert);
 
-    // Define a cleanup function for when the component is unmounted.
+    // Clean up the event listener when the component is unmounted
     return () => worker.current.removeEventListener('message', onMessageReceived);
-  });
+  }, []);
 
-  // Set up classify function
+  // Function to send the current sketch to the worker for prediction
   const classify = useCallback(() => {
     if (worker.current && canvasRef.current) {
       const image = canvasRef.current.getCanvasData();
       if (image !== null) {
         setIsPredicting(true);
-        worker.current.postMessage({ action: 'classify', image })
+        worker.current.postMessage({ action: 'classify', image });
       }
     }
   }, []);
 
-  const canvasRef = useRef(null);
-
+  // Function to handle the end of the game
   const handleEndGame = (cancelled = false) => {
     endGame(cancelled);
   };
 
+  // Function to clear the canvas
   const handleClearCanvas = (resetTimeSpentDrawing = false) => {
     if (canvasRef.current) {
       canvasRef.current.clearCanvas(resetTimeSpentDrawing);
     }
   };
 
+  // Function to start the countdown before the game begins
   const beginCountdown = () => {
     setGameState('countdown');
 
-    // Choose the targets here and shuffle
-    const possibleLabels = Object.values(constants.LABELS)
-      .filter(x => !constants.BANNED_LABELS.includes(x));
+    // Choose the target words for the game and shuffle them
+    const possibleLabels = Object.values(constants.LABELS).filter(
+      (x) => !constants.BANNED_LABELS.includes(x)
+    );
     shuffleArray(possibleLabels);
 
     setTargets(possibleLabels);
     setTargetIndex(0);
-  }
+  };
 
+  // Function to handle the click event on the main menu button
   const handleMainClick = () => {
     if (!ready) {
       setGameState('loading');
-      worker.current.postMessage({ action: 'load' })
+      worker.current.postMessage({ action: 'load' });
     } else {
       beginCountdown();
     }
   };
 
+  // Function to handle the click event on the game over screen
   const handleGameOverClick = (playAgain) => {
     if (playAgain) {
       beginCountdown();
@@ -173,79 +164,92 @@ function App() {
     }
   };
 
-  // Detect for start of game
+  // Start the game when the countdown reaches 0
   useEffect(() => {
     if (gameState === 'countdown' && countdown <= 0) {
       setGameStartTime(performance.now());
       setPredictions([]);
       setGameState('playing');
     }
-  }, [gameState, countdown])
+  }, [gameState, countdown]);
 
-  const addPrediction = useCallback((isCorrect) => {
-    // take snapshot of canvas
-    const image = canvasRef.current.getCanvasData();
+  // Function to add a prediction to the predictions array
+  const addPrediction = useCallback(
+    (isCorrect) => {
+      const image = canvasRef.current.getCanvasData();
+      setPredictions((prev) => [
+        ...prev,
+        {
+          output: output?.[0] ?? null,
+          image: image,
+          correct: isCorrect,
+          target: targets[targetIndex],
+        },
+      ]);
+    },
+    [output, targetIndex, targets]
+  );
 
-    setPredictions(prev => [...prev, {
-      output: output?.[0] ?? null,
-      image: image,
-      correct: isCorrect,
-      target: targets[targetIndex],
-    }]);
-  }, [output, targetIndex, targets]);
+  // Function to end the game
+  const endGame = useCallback(
+    (cancelled = false) => {
+      if (!cancelled) {
+        addPrediction(false);
+      }
 
-  const endGame = useCallback((cancelled = false) => {
-    if (!cancelled) {
-      addPrediction(false);
-    }
+      // Reset the game state
+      setGameStartTime(null);
+      setOutput(null);
+      setSketchHasChanged(false);
+      handleClearCanvas(true);
+      setCountdown(constants.COUNTDOWN_TIMER);
+      setGameState(cancelled ? 'menu' : 'end');
+    },
+    [addPrediction]
+  );
 
-    // reset
-    setGameStartTime(null);
-    setOutput(null);
-    setSketchHasChanged(false);
-    handleClearCanvas(true);
-    setCountdown(constants.COUNTDOWN_TIMER);
-    setGameState(cancelled ? 'menu' : 'end');
-  }, [addPrediction]);
-
-  // Detect for end of game
+  // End the game when the time runs out
   useEffect(() => {
-    if (gameState === 'playing' && gameCurrentTime !== null && gameStartTime !== null && (gameCurrentTime - gameStartTime) / 1000 > constants.GAME_DURATION) {
+    if (
+      gameState === 'playing' &&
+      gameCurrentTime !== null &&
+      gameStartTime !== null &&
+      (gameCurrentTime - gameStartTime) / 1000 > constants.GAME_DURATION
+    ) {
       endGame();
     }
-  }, [endGame, gameState, gameStartTime, gameCurrentTime])
+  }, [endGame, gameState, gameStartTime, gameCurrentTime]);
 
+  // Function to move to the next target word
+  const goNext = useCallback(
+    (isCorrect = false) => {
+      if (!isCorrect) {
+        // Apply a time penalty for skipping a word
+        setGameStartTime((prev) => prev - constants.SKIP_PENALTY);
+      }
+      addPrediction(isCorrect);
 
-  const goNext = useCallback((isCorrect = false) => {
-    if (!isCorrect) {
-      // apply skip penalty (done by pretending the game started earlier)
-      setGameStartTime(prev => {
-        return prev - constants.SKIP_PENALTY
-      });
-    }
-    addPrediction(isCorrect);
+      setTargetIndex((prev) => prev + 1);
+      setOutput(null);
+      setSketchHasChanged(false);
+      handleClearCanvas(true);
+    },
+    [addPrediction]
+  );
 
-    setTargetIndex(prev => prev + 1);
-    setOutput(null);
-    setSketchHasChanged(false);
-    handleClearCanvas(true);
-  }, [addPrediction])
-
-  // detect for correct and go onto next
+  // Move to the next target word when the current one is guessed correctly
   useEffect(() => {
     if (gameState === 'playing' && output !== null && targets !== null) {
-      // console.log(targets[targetIndex], output[0])
-
       if (targets[targetIndex] === output[0].label) {
-        // Correct! Switch to next
         goNext(true);
       }
     }
   }, [goNext, gameState, output, targets, targetIndex]);
 
-  // GAME LOOP:
+  // Game loop
   useEffect(() => {
     if (gameState === 'countdown') {
+      // Start the countdown timer
       const countdownTimer = setInterval(() => {
         setCountdown((prevCount) => prevCount - 1);
       }, 1000);
@@ -254,7 +258,7 @@ function App() {
         clearInterval(countdownTimer);
       };
     } else if (gameState === 'playing') {
-
+      // Periodically classify the sketch and update the game time
       const classifyTimer = setInterval(() => {
         if (sketchHasChanged) {
           !isPredicting && classify();
@@ -268,60 +272,57 @@ function App() {
         clearInterval(classifyTimer);
       };
     } else if (gameState === 'end') {
-      // The game ended naturally (after timer expired)
+      // Clear the canvas when the game ends
       handleClearCanvas(true);
     }
   }, [gameState, isPredicting, sketchHasChanged, addPrediction, classify]);
 
+  // Disable touch scrolling during the game
   useEffect(() => {
     if (gameState === 'playing') {
       const preventDefault = (e) => e.preventDefault();
       document.addEventListener('touchmove', preventDefault, { passive: false });
       return () => {
         document.removeEventListener('touchmove', preventDefault, { passive: false });
-      }
+      };
     }
   }, [gameState]);
+
+  // Determine which components should be visible based on the game state
   const menuVisible = gameState === 'menu' || gameState === 'loading';
   const isPlaying = gameState === 'playing';
   const countdownVisible = gameState === 'countdown';
   const gameOver = gameState === 'end';
+
   return (
     <>
+      {/* The canvas where the player draws */}
       <div className={`h-full w-full top-0 left-0 absolute ${isPlaying ? '' : 'pointer-events-none'}`}>
-        <SketchCanvas onSketchChange={() => {
-          setSketchHasChanged(true);
-        }} ref={canvasRef} />
+        <SketchCanvas
+          onSketchChange={() => {
+            setSketchHasChanged(true);
+          }}
+          ref={canvasRef}
+        />
       </div>
-      <AnimatePresence
-        initial={false}
-        mode='wait'
-      >
-        {menuVisible && (
-          <Menu gameState={gameState} onClick={handleMainClick} />
-        )}
+ 
+      {/* The main menu */}
+      <AnimatePresence initial={false} mode='wait'>
+        {menuVisible && <Menu gameState={gameState} onClick={handleMainClick} />}
       </AnimatePresence>
-
-      <AnimatePresence
-        initial={false}
-        mode='wait'
-      >
-        {countdownVisible && (
-          <Countdown countdown={countdown} />
-        )}
+ 
+      {/* The countdown screen */}
+      <AnimatePresence initial={false} mode='wait'>
+        {countdownVisible && <Countdown countdown={countdown} />}
       </AnimatePresence>
-
-      <AnimatePresence
-        initial={false}
-        mode='wait'
-      >
-        {gameOver && (
-          <GameOver predictions={predictions} onClick={handleGameOverClick} />
-        )}
+ 
+      {/* The game over screen */}
+      <AnimatePresence initial={false} mode='wait'>
+        {gameOver && <GameOver predictions={predictions} onClick={handleGameOverClick} />}
       </AnimatePresence>
-
-      {((isPlaying && gameCurrentTime !== null && targets)) && (
-
+ 
+      {/* The game UI */}
+      {isPlaying && gameCurrentTime !== null && targets && (
         <div className='absolute top-5 text-center'>
           <h2 className='text-4xl'>Draw &quot;{targets[targetIndex]}&quot;</h2>
           <h3 className='text-2xl'>
@@ -329,7 +330,8 @@ function App() {
           </h3>
         </div>
       )}
-
+ 
+      {/* Show a message on the main menu */}
       {menuVisible && (
         <div className='absolute bottom-4'>
           Made with{" "}
@@ -341,14 +343,16 @@ function App() {
           </a>
         </div>
       )}
-
+ 
+      {/* The game controls */}
       {isPlaying && (
         <div className='absolute bottom-5 text-center'>
-
           <h1 className="text-2xl font-bold mb-3">
             {output && `Prediction: ${output[0].label} (${(100 * output[0].score).toFixed(1)}%)`}
+            {output && `Prediction: ${output[1].label} (${(100 * output[1].score).toFixed(1)}%)`}
+            {output && `Prediction: ${output[2].label} (${(100 * output[2].score).toFixed(1)}%)`}
           </h1>
-
+ 
           <div className='flex gap-2 justify-center'>
             <button onClick={() => { handleClearCanvas() }}>Clear</button>
             <button onClick={() => { goNext(false) }}>Skip</button>
@@ -357,7 +361,6 @@ function App() {
         </div>
       )}
     </>
-  )
+  );
 }
-
-export default App
+  export default App;
