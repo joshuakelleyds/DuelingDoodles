@@ -30,91 +30,153 @@ function App() {
   const [countdown, setCountdown] = useState(constants.COUNTDOWN_TIMER); // Stores the countdown timer value
   const [gameCurrentTime, setGameCurrentTime] = useState(null); // Stores the current time during the game
   const [gameStartTime, setGameStartTime] = useState(null); // Stores the start time of the game
-  const [output, setOutput] = useState(null); // Stores the output from the machine learning model
-  const [isPredicting, setIsPredicting] = useState(false); // Indicates if the model is currently making a prediction
+  
+  // Variables for worker 1
+  const [output1, setOutput1] = useState(null); // Stores the output from worker 1
+  const [isPredicting1, setIsPredicting1] = useState(false); // Indicates if worker 1 is currently making a prediction
+  
+  // Variables for worker 2
+  const [output2, setOutput2] = useState(null); // Stores the output from worker 2
+  const [isPredicting2, setIsPredicting2] = useState(false); // Indicates if worker 2 is currently making a prediction
+  
   const [sketchHasChanged, setSketchHasChanged] = useState(false); // Indicates if the player's sketch has changed
   const [targets, setTargets] = useState(null); // Stores the list of target words for the player to draw
   const [targetIndex, setTargetIndex] = useState(0); // Keeps track of the current target word index
   const [predictions, setPredictions] = useState([]); // Stores the history of predictions made during the game
 
-  // Reference to the worker that runs the machine learning model
-  const worker = useRef(null);
+  // References to the workers that run the machine learning model
+  const worker1 = useRef(null);
+  const worker2 = useRef(null);
 
   // Reference to the SketchCanvas component
   const canvasRef = useRef(null);
 
-  // Set up the worker when the component is first loaded
+ // Set up the workers when the component is first loaded
   useEffect(() => {
-    if (!worker.current) {
-      // Create a new worker if it doesn't exist
-      worker.current = new Worker(new URL('./worker.js', import.meta.url), {
+    if (!worker1.current) {
+      // Create a new worker for worker1 if it doesn't exist
+      worker1.current = new Worker(new URL('./worker1.js', import.meta.url), {
         type: 'module',
       });
+      console.log('Worker 1 created');
+    } else {
+      console.log('Worker 1 already exists');
     }
 
-    // Function to handle messages received from the worker
-    const onMessageReceived = (e) => {
+    if (!worker2.current) {
+      // Create a new worker for worker2 if it doesn't exist
+      worker2.current = new Worker(new URL('./worker2.js', import.meta.url), {
+        type: 'module',
+      });
+      console.log('Worker 2 created');
+    } else {
+      console.log('Worker 2 already exists');
+    }
+
+    // Function to handle messages received from worker1
+    const onMessageReceived1 = (e) => {
       const result = e.data;
 
       switch (result.status) {
         case 'ready':
-          // When the worker is ready, set the game as ready and start the countdown
+          // When worker1 is ready, set the game as ready and start the countdown
           setReady(true);
           beginCountdown();
           break;
 
         case 'update':
-          // Not used in this code, but can be used for real-time updates from the worker
+          // Not used in this code, but can be used for real-time updates from worker1
           break;
 
         case 'result':
-          // When the worker sends a prediction result
-          setIsPredicting(false);
-
-          // Filter out any banned labels and adjust the scores based on game settings
-          const filteredResult = result.data.filter(
-            (x) => !constants.BANNED_LABELS.includes(x.label)
-          );
-          const timespent = canvasRef.current.getTimeSpentDrawing();
-          const applyEasyMode = timespent - constants.REJECT_TIME_DELAY;
-          if (applyEasyMode > 0 && filteredResult[0].score > constants.START_REJECT_THRESHOLD) {
-            let amount = applyEasyMode / constants.REJECT_TIME_PER_LABEL;
-            for (let i = 0; i < filteredResult.length && i < amount + 1; ++i) {
-              if (filteredResult[i].label === targets[targetIndex]) {
-                continue;
-              }
-              if (amount > i) {
-                filteredResult[i].score = 0;
-              } else {
-                filteredResult[i].score *= i - amount;
-              }
-            }
-            filteredResult.sort((a, b) => b.score - a.score);
-          }
-
-          // Normalize the scores to add up to 1
-          const sum = filteredResult.reduce((acc, x) => acc + x.score, 0);
-          filteredResult.forEach((x) => (x.score /= sum));
-
-          setOutput(filteredResult);
+          // When worker1 sends a prediction result
+          setIsPredicting1(false);
+          const filteredResult1 = filterAndAdjustScores(result.data);
+          setOutput1(filteredResult1);
           break;
       }
     };
 
-    // Listen for messages from the worker
-    worker.current.addEventListener('message', onMessageReceived);
+    // Function to handle messages received from worker2
+    const onMessageReceived2 = (e) => {
+      const result = e.data;
 
-    // Clean up the event listener when the component is unmounted
-    return () => worker.current.removeEventListener('message', onMessageReceived);
+      switch (result.status) {
+        case 'ready':
+          // When worker2 is ready, set the game as ready and start the countdown
+          setReady(true);
+          beginCountdown();
+          break;
+
+        case 'update':
+          // Not used in this code, but can be used for real-time updates from worker2
+          break;
+
+        case 'result':
+          // When worker2 sends a prediction result
+          setIsPredicting2(false);
+          const filteredResult2 = filterAndAdjustScores(result.data);
+          setOutput2(filteredResult2);
+          break;
+      }
+    };
+
+    // Listen for messages from worker1
+    worker1.current.addEventListener('message', onMessageReceived1);
+
+    // Listen for messages from worker2
+    worker2.current.addEventListener('message', onMessageReceived2);
+    // Function to filter and adjust scores
+    const filterAndAdjustScores = (data) => {
+      // Filter out any banned labels
+      const filteredResult = data.filter(
+        (x) => !constants.BANNED_LABELS.includes(x.label)
+      );
+
+      const timespent = canvasRef.current.getTimeSpentDrawing();
+      const applyEasyMode = timespent - constants.REJECT_TIME_DELAY;
+
+      if (applyEasyMode > 0 && filteredResult[0].score > constants.START_REJECT_THRESHOLD) {
+        let amount = applyEasyMode / constants.REJECT_TIME_PER_LABEL;
+        for (let i = 0; i < filteredResult.length && i < amount + 1; ++i) {
+          if (filteredResult[i].label === targets[targetIndex]) {
+            continue;
+          }
+          if (amount > i) {
+            filteredResult[i].score = 0;
+          } else {
+            filteredResult[i].score *= i - amount;
+          }
+        }
+        filteredResult.sort((a, b) => b.score - a.score);
+      }
+
+      // Normalize the scores to add up to 1
+      const sum = filteredResult.reduce((acc, x) => acc + x.score, 0);
+      filteredResult.forEach((x) => (x.score /= sum));
+
+      return filteredResult;
+    };
+    // Clean up the event listeners when the component is unmounted
+    return () => {
+      worker1.current.removeEventListener('message', onMessageReceived1);
+      worker2.current.removeEventListener('message', onMessageReceived2);
+    };
   }, []);
 
-  // Function to send the current sketch to the worker for prediction
+  // Function to send the current sketch to the workers for prediction
   const classify = useCallback(() => {
-    if (worker.current && canvasRef.current) {
+    if (canvasRef.current) {
       const image = canvasRef.current.getCanvasData();
       if (image !== null) {
-        setIsPredicting(true);
-        worker.current.postMessage({ action: 'classify', image });
+        if (worker1.current) {
+          setIsPredicting1(true);
+          worker1.current.postMessage({ action: 'classify', image });
+        }
+        if (worker2.current) {
+          setIsPredicting2(true);
+          worker2.current.postMessage({ action: 'classify', image });
+        }
       }
     }
   }, []);
@@ -149,7 +211,7 @@ function App() {
   const handleMainClick = () => {
     if (!ready) {
       setGameState('loading');
-      worker.current.postMessage({ action: 'load' });
+      worker2.current.postMessage({ action: 'load' });
     } else {
       beginCountdown();
     }
@@ -180,14 +242,14 @@ function App() {
       setPredictions((prev) => [
         ...prev,
         {
-          output: output?.[0] ?? null,
+          output1: output1?.[0] ?? null,
           image: image,
           correct: isCorrect,
           target: targets[targetIndex],
         },
       ]);
     },
-    [output, targetIndex, targets]
+    [output1, targetIndex, targets]
   );
 
   // Function to end the game
@@ -199,7 +261,7 @@ function App() {
 
       // Reset the game state
       setGameStartTime(null);
-      setOutput(null);
+      setOutput1(null);
       setSketchHasChanged(false);
       handleClearCanvas(true);
       setCountdown(constants.COUNTDOWN_TIMER);
@@ -230,7 +292,7 @@ function App() {
       addPrediction(isCorrect);
 
       setTargetIndex((prev) => prev + 1);
-      setOutput(null);
+      setOutput1(null);
       setSketchHasChanged(false);
       handleClearCanvas(true);
     },
@@ -239,12 +301,12 @@ function App() {
 
   // Move to the next target word when the current one is guessed correctly
   useEffect(() => {
-    if (gameState === 'playing' && output !== null && targets !== null) {
-      if (targets[targetIndex] === output[0].label) {
+    if (gameState === 'playing' && output1 !== null && targets !== null) {
+      if (targets[targetIndex] === output1[0].label) {
         goNext(true);
       }
     }
-  }, [goNext, gameState, output, targets, targetIndex]);
+  }, [goNext, gameState, output1, targets, targetIndex]);
 
   // Game loop
   useEffect(() => {
@@ -261,7 +323,7 @@ function App() {
       // Periodically classify the sketch and update the game time
       const classifyTimer = setInterval(() => {
         if (sketchHasChanged) {
-          !isPredicting && classify();
+          !isPredicting1 && classify();
         }
         setSketchHasChanged(false);
 
@@ -275,7 +337,7 @@ function App() {
       // Clear the canvas when the game ends
       handleClearCanvas(true);
     }
-  }, [gameState, isPredicting, sketchHasChanged, addPrediction, classify]);
+  }, [gameState, isPredicting1, sketchHasChanged, addPrediction, classify]);
 
   // Disable touch scrolling during the game
   useEffect(() => {
@@ -348,9 +410,9 @@ function App() {
       {isPlaying && (
         <div className='absolute bottom-5 text-center'>
           <h1 className="text-2xl font-bold mb-3">
-            {output && `Prediction: ${output[0].label} (${(100 * output[0].score).toFixed(1)}%)`}
-            {output && `Prediction: ${output[1].label} (${(100 * output[1].score).toFixed(1)}%)`}
-            {output && `Prediction: ${output[2].label} (${(100 * output[2].score).toFixed(1)}%)`}
+            {output1 && `Prediction: ${output1[0].label} (${(100 * output1[0].score).toFixed(1)}%)`}
+            {output1 && `Prediction: ${output1[1].label} (${(100 * output1[1].score).toFixed(1)}%)`}
+            {output1 && `Prediction: ${output1[2].label} (${(100 * output1[2].score).toFixed(1)}%)`}
           </h1>
  
           <div className='flex gap-2 justify-center'>

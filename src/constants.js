@@ -26,7 +26,7 @@ export default {
     PREDICTION_REFRESH_TIME: 10,
     BRUSH_SIZE: IS_MOBILE ? 12 : 16,
     TARGET_FPS: 60,
-    GAME_DURATION: 60 + 0.5, // + 0.5 so it doesn't flicker (TODO: change to 60)
+    GAME_DURATION: 20 + 0.5, // + 0.5 so it doesn't flicker (TODO: change to 60)
     COUNTDOWN_TIMER: 3,
 
     START_REJECT_THRESHOLD: 0.2, // How confident the model should be before starting to reject

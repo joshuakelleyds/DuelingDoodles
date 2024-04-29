@@ -60,9 +60,12 @@ self.addEventListener("message", async (event) => {
 
 class ImageClassificationPipelineSingleton extends Singleton {
     static task = "image-classification";
-    static model = `Xenova/${constants.DEFAULT_MODEL}`;
+    // Update model name here
+    static model = "Xenova/quickdraw-mobilevit-small";
     static quantized = constants.DEFAULT_QUANTIZED;
 }
+
+
 
 const classify = async (image) => {
 
