@@ -80,8 +80,9 @@ function App() {
       switch (result.status) {
         case 'ready':
           // When worker1 is ready, set the game as ready and start the countdown
-          setReady(true);
-          beginCountdown();
+          //setReady(true);
+          //beginCountdown();
+          console.log('Worker 1 Ready');
           break;
 
         case 'update':
@@ -106,6 +107,7 @@ function App() {
           // When worker2 is ready, set the game as ready and start the countdown
           setReady(true);
           beginCountdown();
+          console.log('Worker 2 Ready');
           break;
 
         case 'update':
@@ -121,13 +123,17 @@ function App() {
       }
     };
 
-    // Listen for messages from worker1
+    // Listen for messages from worker1 (ai model 1)
     worker1.current.addEventListener('message', onMessageReceived1);
 
-    // Listen for messages from worker2
+    // Listen for messages from worker2 (ai model 2)
     worker2.current.addEventListener('message', onMessageReceived2);
     // Function to filter and adjust scores
     const filterAndAdjustScores = (data) => {
+      if (!data || data.length === 0) {
+        return []; // Return an empty array if data is null or empty
+      }
+
       // Filter out any banned labels
       const filteredResult = data.filter(
         (x) => !constants.BANNED_LABELS.includes(x.label)
@@ -136,7 +142,7 @@ function App() {
       const timespent = canvasRef.current.getTimeSpentDrawing();
       const applyEasyMode = timespent - constants.REJECT_TIME_DELAY;
 
-      if (applyEasyMode > 0 && filteredResult[0].score > constants.START_REJECT_THRESHOLD) {
+      if (applyEasyMode > 0 && filteredResult.length > 0 && filteredResult[0].score > constants.START_REJECT_THRESHOLD) {
         let amount = applyEasyMode / constants.REJECT_TIME_PER_LABEL;
         for (let i = 0; i < filteredResult.length && i < amount + 1; ++i) {
           if (filteredResult[i].label === targets[targetIndex]) {
@@ -211,6 +217,7 @@ function App() {
   const handleMainClick = () => {
     if (!ready) {
       setGameState('loading');
+      worker1.current.postMessage({ action: 'load' });
       worker2.current.postMessage({ action: 'load' });
     } else {
       beginCountdown();
@@ -243,14 +250,16 @@ function App() {
         ...prev,
         {
           output1: output1?.[0] ?? null,
+          output2: output2?.[0] ?? null,
           image: image,
           correct: isCorrect,
           target: targets[targetIndex],
         },
       ]);
     },
-    [output1, targetIndex, targets]
+    [output1, output2, targetIndex, targets]
   );
+
 
   // Function to end the game
   const endGame = useCallback(
@@ -299,14 +308,14 @@ function App() {
     [addPrediction]
   );
 
-  // Move to the next target word when the current one is guessed correctly
-  useEffect(() => {
-    if (gameState === 'playing' && output1 !== null && targets !== null) {
-      if (targets[targetIndex] === output1[0].label) {
-        goNext(true);
-      }
+// Move to the next target word when the current one is guessed correctly
+useEffect(() => {
+  if (gameState === 'playing' && output1 !== null && output2 !== null && targets !== null) {
+    if (targets[targetIndex] === output1[0].label || targets[targetIndex] === output2[0].label) {
+      goNext(true);
     }
-  }, [goNext, gameState, output1, targets, targetIndex]);
+  }
+}, [goNext, gameState, output1, output2, targets, targetIndex]);
 
   // Game loop
   useEffect(() => {
@@ -410,11 +419,14 @@ function App() {
       {isPlaying && (
         <div className='absolute bottom-5 text-center'>
           <h1 className="text-2xl font-bold mb-3">
-            {output1 && `Prediction: ${output1[0].label} (${(100 * output1[0].score).toFixed(1)}%)`}
-            {output1 && `Prediction: ${output1[1].label} (${(100 * output1[1].score).toFixed(1)}%)`}
-            {output1 && `Prediction: ${output1[2].label} (${(100 * output1[2].score).toFixed(1)}%)`}
+            {output1 && output1[0] && `Prediction 1: ${output1[0].label} (${(100 * output1[0].score).toFixed(1)}%)`}
+            {output1 && output1[1] && `Prediction 1: ${output1[1].label} (${(100 * output1[1].score).toFixed(1)}%)`}
+            {output1 && output1[2] && `Prediction 1: ${output1[2].label} (${(100 * output1[2].score).toFixed(1)}%)`}
+            <br />
+            {output2 && output2[0] && `Prediction 2: ${output2[0].label} (${(100 * output2[0].score).toFixed(1)}%)`}
+            {output2 && output2[1] && `Prediction 2: ${output2[1].label} (${(100 * output2[1].score).toFixed(1)}%)`}
+            {output2 && output2[2] && `Prediction 2: ${output2[2].label} (${(100 * output2[2].score).toFixed(1)}%)`}
           </h1>
- 
           <div className='flex gap-2 justify-center'>
             <button onClick={() => { handleClearCanvas() }}>Clear</button>
             <button onClick={() => { goNext(false) }}>Skip</button>

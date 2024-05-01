@@ -61,7 +61,7 @@ self.addEventListener("message", async (event) => {
 class ImageClassificationPipelineSingleton extends Singleton {
     static task = "image-classification";
     // Update model name here
-    static model = "Xenova/quickdraw-mobilevit-small";
+    static model = "dominguesm/onlyfans-content-identify";
     static quantized = constants.DEFAULT_QUANTIZED;
 }
 

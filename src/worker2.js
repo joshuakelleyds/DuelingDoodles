@@ -61,7 +61,7 @@ self.addEventListener("message", async (event) => {
 class ImageClassificationPipelineSingleton extends Singleton {
     static task = "image-classification";
     // Update model name here
-    static model = "dominguesm/onlyfans-content-identify";
+    static model = "JoshuaKelleyDs/doodle-MobileVIT-xxs-finetune";
     static quantized = constants.DEFAULT_QUANTIZED;
 }
 

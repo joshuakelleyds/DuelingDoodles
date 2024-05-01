@@ -6,7 +6,7 @@ const START_DRAW_EVENTS = ['mousedown', 'touchstart'];
 const DRAW_EVENTS = ['mousemove', 'touchmove'];
 const STOP_DRAW_EVENTS = ['mouseup', 'mouseout', 'touchend'];
 
-const THROTTLE_MS = 15;
+const THROTTLE_MS = 5;
 const CANVAS_SIZE = Math.max(window.screen.width, window.screen.height);
 const SKETCH_PADDING = 2;
 
