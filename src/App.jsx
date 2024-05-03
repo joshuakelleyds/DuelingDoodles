@@ -1,3 +1,4 @@
+// Import necessary dependencies
 import { useCallback, useEffect, useRef, useState } from 'react';
 import './App.css';
 import SketchCanvas from './components/SketchCanvas';
@@ -18,10 +19,10 @@ import {
   checkGameOver,
   checkWordGuessed,
   gameLoop,
-
 } from './GameLogic';
 
 function App() {
+  // State variables
   const [ready, setReady] = useState(false);
   const [gameState, setGameState] = useState('menu');
   const [countdown, setCountdown] = useState(constants.COUNTDOWN_TIMER);
@@ -35,21 +36,24 @@ function App() {
   const [targets, setTargets] = useState(null);
   const [targetIndex, setTargetIndex] = useState(0);
   const [predictions, setPredictions] = useState([]);
+
+  // Refs
   const worker1 = useRef(null);
   const worker2 = useRef(null);
   const canvasRef = useRef(null);
 
   useEffect(() => {
+    // Create worker instances
     const { worker1: createdWorker1, worker2: createdWorker2 } = createWorkers();
     worker1.current = createdWorker1;
     worker2.current = createdWorker2;
   
+    // Message handler for worker 1
     const onMessageReceived1 = (e) => {
       const result = e.data;
   
       switch (result.status) {
         case 'ready':
-          console.log('Worker 1 Ready');
           break;
   
         case 'update':
@@ -64,14 +68,13 @@ function App() {
       }
     };
   
+    // Message handler for worker 2
     const onMessageReceived2 = (e) => {
       const result = e.data;
-  
       switch (result.status) {
         case 'ready':
           setReady(true);
-          startCountdown(setCountdown, setGameState);
-          console.log('Worker 2 Ready');
+          beginCountdown();
           break;
   
         case 'update':
@@ -86,9 +89,11 @@ function App() {
       }
     };
   
+    // Add message event listeners to workers
     worker1.current.addEventListener('message', onMessageReceived1);
     worker2.current.addEventListener('message', onMessageReceived2);
   
+    // Cleanup function to remove event listeners when component unmounts
     return () => {
       worker1.current.removeEventListener('message', onMessageReceived1);
       worker2.current.removeEventListener('message', onMessageReceived2);
@@ -99,10 +104,12 @@ function App() {
     if (canvasRef.current) {
       const image = canvasRef.current.getCanvasData();
       if (image !== null) {
+        // Send classification request to worker 1
         if (worker1.current) {
           setIsPredicting1(true);
           worker1.current.postMessage({ action: 'classify', image });
         }
+        // Send classification request to worker 2
         if (worker2.current) {
           setIsPredicting2(true);
           worker2.current.postMessage({ action: 'classify', image });
@@ -123,10 +130,13 @@ function App() {
 
   const beginCountdown = () => {
     startCountdown(setCountdown, setGameState);
+    // Generate possible labels for the game
     const possibleLabels = Object.values(constants.LABELS).filter(
       (x) => !constants.BANNED_LABELS.includes(x)
     );
+    // Shuffle the labels
     shuffleArray(possibleLabels);
+    // Set the targets and target index
     setTargets(possibleLabels);
     setTargetIndex(0);
   };
@@ -134,23 +144,27 @@ function App() {
 
   const handleMainClick = () => {
     if (!ready) {
+      // If not ready, set game state to loading and load the workers
       setGameState('loading');
       worker1.current.postMessage({ action: 'load' });
       worker2.current.postMessage({ action: 'load' });
     } else {
+      // If ready, begin the countdown
       beginCountdown();
     }
   };
 
   const handleGameOverClick = (playAgain) => {
     if (playAgain) {
+      // If playing again, begin the countdown
       beginCountdown();
     } else {
+      // If not playing again, end the game
       endGame(setGameState, addPrediction, handleClearCanvas, true);
     }
   };
 
-  useEffect(() => {
+  useEffect(() => {;
     if (gameState === 'countdown' && countdown <= 0) {
       startGame(setGameStartTime, setPredictions, setGameState);
     }
@@ -178,8 +192,22 @@ function App() {
   }, [gameState, gameCurrentTime, gameStartTime, handleEndGame]);
 
   useEffect(() => {
-    checkWordGuessed(gameState, output1, output2, targets, targetIndex, goToNextWord);
-  }, [gameState, output1, output2, targets, targetIndex, goToNextWord]);
+    checkWordGuessed(
+      gameState,
+      output1,
+      output2,
+      targets,
+      targetIndex,
+      goToNextWord,
+      addPrediction,
+      setTargetIndex,
+      setOutput1,
+      setOutput2,
+      setSketchHasChanged,
+      handleClearCanvas,
+      setGameStartTime
+    );
+  }, [gameState, output1, output2, targets, targetIndex, goToNextWord, addPrediction, setTargetIndex, setOutput1, setOutput2, setSketchHasChanged, handleClearCanvas, setGameStartTime]);
 
 
   useEffect(() => {
@@ -205,6 +233,7 @@ function App() {
     }
   }, [gameState]);
 
+  // Determine which components should be visible based on game state
   const menuVisible = gameState === 'menu' || gameState === 'loading';
   const isPlaying = gameState === 'playing';
   const countdownVisible = gameState === 'countdown';
@@ -264,7 +293,7 @@ function App() {
       {isPlaying && (
         <div className='absolute bottom-5 text-center'>
           <h1 className="text-2xl font-bold mb-3">
-            {`isPlaying: ${targets}`}
+            {/* {`isPlaying: ${targets}`}*/}
             {output1 && output1[0] && `Prediction 1: ${output1[0].label} (${(100 * output1[0].score).toFixed(1)}%)`}
             {output1 && output1[1] && `Prediction 1: ${output1[1].label} (${(100 * output1[1].score).toFixed(1)}%)`}
             {output1 && output1[2] && `Prediction 1: ${output1[2].label} (${(100 * output1[2].score).toFixed(1)}%)`}
@@ -275,7 +304,17 @@ function App() {
           </h1>
           <div className='flex gap-2 justify-center'>
             <button onClick={() => { handleClearCanvas() }}>Clear</button>
-            <button onClick={() => { goToNextWord(false) }}>Skip</button>
+            <button onClick={() => {
+              goToNextWord(addPrediction,
+                setTargetIndex,
+                setOutput1,
+                setOutput2,
+                setSketchHasChanged,
+                handleClearCanvas,
+                false,
+                setGameStartTime
+              )
+            }}>Skip</button>
             <button onClick={() => { handleEndGame(true) }}>Exit</button>
           </div>
         </div>
