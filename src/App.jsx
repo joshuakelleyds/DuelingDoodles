@@ -7,6 +7,8 @@ import Menu from './components/Menu';
 import GameOver from './components/GameOver';
 import Countdown from './components/Countdown';
 import { AnimatePresence } from 'framer-motion';
+import PredictionChart from './components/PredictionChart';
+
 import {
   formatTime,
   shuffleArray,
@@ -291,33 +293,41 @@ function App() {
    
       {/* The game controls */}
       {isPlaying && (
-        <div className='absolute bottom-5 text-center'>
-          <h1 className="text-2xl font-bold mb-3">
-            {/* {`isPlaying: ${targets}`}*/}
-            {output1 && output1[0] && `Prediction 1: ${output1[0].label} (${(100 * output1[0].score).toFixed(1)}%)`}
-            {output1 && output1[1] && `Prediction 1: ${output1[1].label} (${(100 * output1[1].score).toFixed(1)}%)`}
-            {output1 && output1[2] && `Prediction 1: ${output1[2].label} (${(100 * output1[2].score).toFixed(1)}%)`}
-            <br />
-            {output2 && output2[0] && `Prediction 2: ${output2[0].label} (${(100 * output2[0].score).toFixed(1)}%)`}
-            {output2 && output2[1] && `Prediction 2: ${output2[1].label} (${(100 * output2[1].score).toFixed(1)}%)`}
-            {output2 && output2[2] && `Prediction 2: ${output2[2].label} (${(100 * output2[2].score).toFixed(1)}%)`}
-          </h1>
-          <div className='flex gap-2 justify-center'>
-            <button onClick={() => { handleClearCanvas() }}>Clear</button>
-            <button onClick={() => {
-              goToNextWord(addPrediction,
-                setTargetIndex,
-                setOutput1,
-                setOutput2,
-                setSketchHasChanged,
-                handleClearCanvas,
-                false,
-                setGameStartTime
-              )
-            }}>Skip</button>
-            <button onClick={() => { handleEndGame(true) }}>Exit</button>
+        <>
+          <div className='absolute left-5 top-1/2 transform -translate-y-1/2'>
+            <PredictionChart output1={output1} />
           </div>
-        </div>
+          <div className='absolute right-5 top-1/2 transform -translate-y-1/2'>
+            <PredictionChart output1={output2} />
+          </div>
+          <div className='absolute bottom-5 text-center w-full'>
+            <h1 className="text-2xl font-bold mb-3">
+              {/* {`isPlaying: ${targets}`}*/}
+              {output1 && output1[0] && `Prediction 1: ${output1[0].label} (${(100 * output1[0].score).toFixed(1)}%)`}
+              {output1 && output1[1] && `Prediction 1: ${output1[1].label} (${(100 * output1[1].score).toFixed(1)}%)`}
+              {output1 && output1[2] && `Prediction 1: ${output1[2].label} (${(100 * output1[2].score).toFixed(1)}%)`}
+              <br />
+              {output2 && output2[0] && `Prediction 2: ${output2[0].label} (${(100 * output2[0].score).toFixed(1)}%)`}
+              {output2 && output2[1] && `Prediction 2: ${output2[1].label} (${(100 * output2[1].score).toFixed(1)}%)`}
+              {output2 && output2[2] && `Prediction 2: ${output2[2].label} (${(100 * output2[2].score).toFixed(1)}%)`}
+            </h1>
+            <div className='flex gap-2 justify-center'>
+              <button onClick={() => { handleClearCanvas() }}>Clear</button>
+              <button onClick={() => {
+                goToNextWord(addPrediction,
+                  setTargetIndex,
+                  setOutput1,
+                  setOutput2,
+                  setSketchHasChanged,
+                  handleClearCanvas,
+                  false,
+                  setGameStartTime
+                )
+              }}>Skip</button>
+              <button onClick={() => { handleEndGame(true) }}>Exit</button>
+            </div>
+          </div>
+        </>
       )}
     </>
   );

@@ -42,20 +42,26 @@ export const filterAndAdjustScores = (data, timeSpentDrawing) => {
 
   const sum = filteredResult.reduce((acc, x) => acc + x.score, 0);
   filteredResult.forEach((x) => (x.score /= sum));
+  
   return filteredResult;
 };
 
 export const createWorkers = () => {
-  // creates two web workers for parallel processing
-  const worker1 = new Worker(new URL('./worker1.js', import.meta.url), {
-    type: 'module',
-  });
+  try {
+    // creates two web workers for parallel processing
+    const worker1 = new Worker(new URL('./worker1.js', import.meta.url), {
+      type: 'module',
+    });
 
-  const worker2 = new Worker(new URL('./worker2.js', import.meta.url), {
-    type: 'module',
-  });
+    const worker2 = new Worker(new URL('./worker2.js', import.meta.url), {
+      type: 'module',
+    });
 
-  return { worker1, worker2 };
+    return { worker1, worker2 };
+  } catch (error) {
+    console.error('Error creating workers:', error);
+    return null;
+  }
 };
 
 export const startCountdown = (setCountdown, setGameState) => {
