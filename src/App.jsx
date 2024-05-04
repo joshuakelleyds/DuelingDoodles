@@ -294,10 +294,10 @@ function App() {
       {/* The game controls */}
       {isPlaying && (
         <>
-          <div className='absolute left-5 top-1/2 transform -translate-y-1/2'>
+          /*<div className='absolute left-0 top-1/2 transform -translate-y-1/2'>
             <PredictionChart output1={output1} />
           </div>
-          <div className='absolute right-5 top-1/2 transform -translate-y-1/2'>
+          <div className='absolute right-0 top-1/2 transform -translate-y-1/2'>
             <PredictionChart output1={output2} />
           </div>
           <div className='absolute bottom-5 text-center w-full'>

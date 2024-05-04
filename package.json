@@ -12,6 +12,7 @@
   "dependencies": {
     "@xenova/transformers": "^2.3.1",
     "chart.js": "^4.4.2",
+    "d3": "^7.9.0",
     "framer-motion": "^10.12.18",
     "highcharts": "^11.4.1",
     "highcharts-react-official": "^3.2.1",
