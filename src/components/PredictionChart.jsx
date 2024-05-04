@@ -2,13 +2,14 @@ import React, { useEffect, useRef } from 'react';
 import * as d3 from 'd3';
 
 const PredictionChart = ({ output1 }) => {
+  // Chart reference 
   const chartRef = useRef(null);
-
+  
   useEffect(() => {
     if (!output1 || output1.length === 0) return;
 
-    const width = 500;
-    const height = 1200;
+    const width = window.innerWidth / 4;
+    const height = window.innerHeight;
 
     const svg = d3.select(chartRef.current)
       .attr('width', width)

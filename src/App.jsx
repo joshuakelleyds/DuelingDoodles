@@ -38,6 +38,10 @@ function App() {
   const [targets, setTargets] = useState(null);
   const [targetIndex, setTargetIndex] = useState(0);
   const [predictions, setPredictions] = useState([]);
+  const [graphOutput1, setGraphOutput1] = useState(null);
+  const [graphOutput2, setGraphOutput2] = useState(null);
+  const [graphUpdateCount1, setGraphUpdateCount1] = useState(0);
+  const [graphUpdateCount2, setGraphUpdateCount2] = useState(0);
 
   // Refs
   const worker1 = useRef(null);
@@ -49,27 +53,28 @@ function App() {
     const { worker1: createdWorker1, worker2: createdWorker2 } = createWorkers();
     worker1.current = createdWorker1;
     worker2.current = createdWorker2;
-  
+
     // Message handler for worker 1
     const onMessageReceived1 = (e) => {
       const result = e.data;
-  
+
       switch (result.status) {
         case 'ready':
           break;
-  
+
         case 'update':
           // Not used in this code, but can be used for real-time updates from worker1
           break;
-  
+
         case 'result':
           setIsPredicting1(false);
           const filteredResult1 = filterAndAdjustScores(result.data, canvasRef.current.getTimeSpentDrawing());
           setOutput1(filteredResult1);
+          setGraphUpdateCount1((prevCount) => prevCount + 1);
           break;
       }
     };
-  
+
     // Message handler for worker 2
     const onMessageReceived2 = (e) => {
       const result = e.data;
@@ -78,29 +83,43 @@ function App() {
           setReady(true);
           beginCountdown();
           break;
-  
+
         case 'update':
           // Not used in this code, but can be used for real-time updates from worker2
           break;
-  
+
         case 'result':
           setIsPredicting2(false);
           const filteredResult2 = filterAndAdjustScores(result.data, canvasRef.current.getTimeSpentDrawing());
           setOutput2(filteredResult2);
+          setGraphUpdateCount2((prevCount) => prevCount + 1);
           break;
       }
     };
-  
+
     // Add message event listeners to workers
     worker1.current.addEventListener('message', onMessageReceived1);
     worker2.current.addEventListener('message', onMessageReceived2);
-  
+
     // Cleanup function to remove event listeners when component unmounts
     return () => {
       worker1.current.removeEventListener('message', onMessageReceived1);
       worker2.current.removeEventListener('message', onMessageReceived2);
     };
   }, []);
+
+  // Update graph outputs every 10 changes
+  useEffect(() => {
+    if (graphUpdateCount1 % 10 === 0) {
+      setGraphOutput1(output1);
+    }
+  }, [graphUpdateCount1, output1]);
+
+  useEffect(() => {
+    if (graphUpdateCount2 % 10 === 0) {
+      setGraphOutput2(output2);
+    }
+  }, [graphUpdateCount2, output2]);
 
   const classify = useCallback(() => {
     if (canvasRef.current) {
@@ -143,7 +162,6 @@ function App() {
     setTargetIndex(0);
   };
 
-
   const handleMainClick = () => {
     if (!ready) {
       // If not ready, set game state to loading and load the workers
@@ -166,7 +184,7 @@ function App() {
     }
   };
 
-  useEffect(() => {;
+  useEffect(() => {
     if (gameState === 'countdown' && countdown <= 0) {
       startGame(setGameStartTime, setPredictions, setGameState);
     }
@@ -211,7 +229,6 @@ function App() {
     );
   }, [gameState, output1, output2, targets, targetIndex, goToNextWord, addPrediction, setTargetIndex, setOutput1, setOutput2, setSketchHasChanged, handleClearCanvas, setGameStartTime]);
 
-
   useEffect(() => {
     const cleanup = gameLoop(
       gameState,
@@ -252,22 +269,22 @@ function App() {
           ref={canvasRef}
         />
       </div>
-   
+
       {/* The main menu */}
       <AnimatePresence initial={false} mode='wait'>
         {menuVisible && <Menu gameState={gameState} onClick={handleMainClick} />}
       </AnimatePresence>
-   
+
       {/* The countdown screen */}
       <AnimatePresence initial={false} mode='wait'>
         {countdownVisible && <Countdown countdown={countdown} />}
       </AnimatePresence>
-   
+
       {/* The game over screen */}
       <AnimatePresence initial={false} mode='wait'>
         {gameOver && <GameOver predictions={predictions} onClick={handleGameOverClick} />}
       </AnimatePresence>
-   
+
       {/* The game UI */}
       {isPlaying && gameCurrentTime !== null && targets && (
         <div className='absolute top-5 text-center'>
@@ -277,7 +294,7 @@ function App() {
           </h3>
         </div>
       )}
-   
+
       {/* Show a message on the main menu */}
       {menuVisible && (
         <div className='absolute bottom-4'>
@@ -290,19 +307,18 @@ function App() {
           </a>
         </div>
       )}
-   
+
       {/* The game controls */}
       {isPlaying && (
         <>
-          /*<div className='absolute left-0 top-1/2 transform -translate-y-1/2'>
-            <PredictionChart output1={output1} />
+          <div className='absolute left-0 top-1/2 transform -translate-y-1/2'>
+            <PredictionChart output1={graphOutput1} />
           </div>
           <div className='absolute right-0 top-1/2 transform -translate-y-1/2'>
-            <PredictionChart output1={output2} />
+            <PredictionChart output1={graphOutput2} />
           </div>
           <div className='absolute bottom-5 text-center w-full'>
             <h1 className="text-2xl font-bold mb-3">
-              {/* {`isPlaying: ${targets}`}*/}
               {output1 && output1[0] && `Prediction 1: ${output1[0].label} (${(100 * output1[0].score).toFixed(1)}%)`}
               {output1 && output1[1] && `Prediction 1: ${output1[1].label} (${(100 * output1[1].score).toFixed(1)}%)`}
               {output1 && output1[2] && `Prediction 1: ${output1[2].label} (${(100 * output1[2].score).toFixed(1)}%)`}
