@@ -108,17 +108,35 @@ function App() {
     };
   }, []);
 
-  // Update graph outputs every 10 changes
+  // Update graph outputs every 10 changes or 2 seconds
   useEffect(() => {
+    const timer = setTimeout(() => {
+      setGraphOutput1(output1);
+    }, 200);
+
     if (graphUpdateCount1 % 10 === 0) {
       setGraphOutput1(output1);
+      clearTimeout(timer);
     }
+
+    return () => {
+      clearTimeout(timer);
+    };
   }, [graphUpdateCount1, output1]);
 
   useEffect(() => {
+    const timer = setTimeout(() => {
+      setGraphOutput2(output2);
+    }, 200);
+
     if (graphUpdateCount2 % 10 === 0) {
       setGraphOutput2(output2);
+      clearTimeout(timer);
     }
+
+    return () => {
+      clearTimeout(timer);
+    };
   }, [graphUpdateCount2, output2]);
 
   const classify = useCallback(() => {
@@ -311,21 +329,17 @@ function App() {
       {/* The game controls */}
       {isPlaying && (
         <>
-          <div className='absolute left-0 top-1/2 transform -translate-y-1/2'>
+          <div className='absolute left-0 top-0'>
             <PredictionChart output1={graphOutput1} />
           </div>
-          <div className='absolute right-0 top-1/2 transform -translate-y-1/2'>
+          <div className='absolute right-0 top-0'>
             <PredictionChart output1={graphOutput2} />
           </div>
           <div className='absolute bottom-5 text-center w-full'>
             <h1 className="text-2xl font-bold mb-3">
-              {output1 && output1[0] && `Prediction 1: ${output1[0].label} (${(100 * output1[0].score).toFixed(1)}%)`}
-              {output1 && output1[1] && `Prediction 1: ${output1[1].label} (${(100 * output1[1].score).toFixed(1)}%)`}
-              {output1 && output1[2] && `Prediction 1: ${output1[2].label} (${(100 * output1[2].score).toFixed(1)}%)`}
+              {output1 && output1[0] && `MobileVIT-XXS Prediction: ${output1[0].label} (${(100 * output1[0].score).toFixed(1)}%)`}
               <br />
-              {output2 && output2[0] && `Prediction 2: ${output2[0].label} (${(100 * output2[0].score).toFixed(1)}%)`}
-              {output2 && output2[1] && `Prediction 2: ${output2[1].label} (${(100 * output2[1].score).toFixed(1)}%)`}
-              {output2 && output2[2] && `Prediction 2: ${output2[2].label} (${(100 * output2[2].score).toFixed(1)}%)`}
+              {output2 && output2[0] && `MobileVIT-Small Prediction: ${output2[0].label} (${(100 * output2[0].score).toFixed(1)}%)`}
             </h1>
             <div className='flex gap-2 justify-center'>
               <button onClick={() => { handleClearCanvas() }}>Clear</button>

@@ -2,14 +2,15 @@ import React, { useEffect, useRef } from 'react';
 import * as d3 from 'd3';
 
 const PredictionChart = ({ output1 }) => {
-  // Chart reference 
+  // Chart reference
   const chartRef = useRef(null);
-  
+
   useEffect(() => {
     if (!output1 || output1.length === 0) return;
 
     const width = window.innerWidth / 4;
     const height = window.innerHeight;
+    const minDimension = Math.min(width, height);
 
     const svg = d3.select(chartRef.current)
       .attr('width', width)
@@ -18,7 +19,7 @@ const PredictionChart = ({ output1 }) => {
 
     const radiusScale = d3.scaleSqrt()
       .domain([0, 1])
-      .range([10, 225]);
+      .range([minDimension * 0.03, minDimension * 0.4]);
 
     const simulation = d3.forceSimulation(output1)
       .force('x', d3.forceX(width / 2).strength(0.01))
