@@ -336,9 +336,9 @@ function App() {
             <PredictionChart output1={graphOutput2} />
           </div>
           <div className='absolute bottom-5 text-center w-full'>
-            <div className='flex justify-around mb-5'>
-              <div className='w-1/3 text-left'>
-                <h1 className="text-2xl font-bold">
+            <div className='flex justify-center gap-5 mb-5'>
+              <div className='flex flex-col items-center justify-center w-1/3'>
+                <h1 className="text-2xl font-bold text-center">
                   {output1 && output1[0] && (
                     <>
                       MobileVIT-XXS
@@ -348,8 +348,8 @@ function App() {
                   )}
                 </h1>
               </div>
-              <div className='w-1/3 text-right'>
-                <h1 className="text-2xl font-bold">
+              <div className='flex flex-col items-center justify-center w-1/3'>
+                <h1 className="text-2xl font-bold text-center">
                   {output2 && output2[0] && (
                     <>
                       MobileVIT-Small
@@ -360,32 +360,21 @@ function App() {
                 </h1>
               </div>
             </div>
-            <div className='flex gap-2 justify-center'>
+            <div className='flex gap-4 justify-center'>
               <button
-                className='px-4 py-2 bg-gray-300 rounded'
+                className='px-10 py-4 bg-gray-300 text-black rounded hover:bg-gray-300'
                 onClick={handleClearCanvas}
               >
                 Clear
               </button>
               <button
-                className='px-4 py-2 bg-blue-300 rounded'
-                onClick={() => {
-                  goToNextWord(
-                    addPrediction,
-                    setTargetIndex,
-                    setOutput1,
-                    setOutput2,
-                    setSketchHasChanged,
-                    handleClearCanvas,
-                    false,
-                    setGameStartTime
-                  );
-                }}
+                className='px-10 py-4 bg-blue-300 text-black rounded hover:bg-blue-300'
+                onClick={() => { goNext(false); }}
               >
                 Skip
               </button>
               <button
-                className='px-4 py-2 bg-red-300 rounded'
+                className='px-10 py-4 bg-red-300 text-black rounded hover:bg-red-500'
                 onClick={() => { handleEndGame(true); }}
               >
                 Exit
