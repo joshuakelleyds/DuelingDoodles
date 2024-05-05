@@ -329,56 +329,28 @@ function App() {
       {/* The game controls */}
       {isPlaying && (
         <>
-          <div className='absolute left-0 top-0'>
+          <div className="absolute left-0 top-0">
             <PredictionChart output1={graphOutput1} />
           </div>
-          <div className='absolute right-0 top-0'>
+
+          <div className="absolute right-0 top-0">
             <PredictionChart output1={graphOutput2} />
           </div>
-          <div className='absolute bottom-5 text-center w-full'>
-            <div className='flex justify-center gap-5 mb-5'>
-              <div className='flex flex-col items-center justify-center w-1/3'>
-                <h1 className="text-2xl font-bold text-center">
-                  {output1 && output1[0] && (
-                    <>
-                      MobileVIT-XXS
-                      <br />
-                      Prediction: {output1[0].label} ({(100 * output1[0].score).toFixed(1)}%)
-                    </>
-                  )}
-                </h1>
+
+          <div className="absolute bottom-5 text-center w-full">
+            <div className="flex justify-center gap-20 mb-5">
+              <div className="flex flex-col items-center justify-center w-1/4">
+                <h1 className="text-2xl font-bold text-center">{output1 && output1[0] && (<>MobileVIT-XXS<br />Prediction: {output1[0].label} ({(100 * output1[0].score).toFixed(1)}%)</>)}</h1>
               </div>
-              <div className='flex flex-col items-center justify-center w-1/3'>
-                <h1 className="text-2xl font-bold text-center">
-                  {output2 && output2[0] && (
-                    <>
-                      MobileVIT-Small
-                      <br />
-                      Prediction: {output2[0].label} ({(100 * output2[0].score).toFixed(1)}%)
-                    </>
-                  )}
-                </h1>
+
+              <div className="flex flex-col items-center justify-center w-1/4">
+                <h1 className="text-2xl font-bold text-center">{output2 && output2[0] && (<>MobileVIT-Small<br />Prediction: {output2[0].label} ({(100 * output2[0].score).toFixed(1)}%)</>)}</h1>
               </div>
             </div>
-            <div className='flex gap-4 justify-center'>
-              <button
-                className='px-10 py-4 bg-gray-300 text-black rounded hover:bg-gray-300'
-                onClick={handleClearCanvas}
-              >
-                Clear
-              </button>
-              <button
-                className='px-10 py-4 bg-blue-300 text-black rounded hover:bg-blue-300'
-                onClick={() => { goNext(false); }}
-              >
-                Skip
-              </button>
-              <button
-                className='px-10 py-4 bg-red-300 text-black rounded hover:bg-red-500'
-                onClick={() => { handleEndGame(true); }}
-              >
-                Exit
-              </button>
+            <div className="flex gap-4 justify-center">
+              <button className="px-8 py-4 bg-gray-300 text-white text-lg rounded hover:bg-gray-400" onClick={handleClearCanvas}>Clear</button>
+              <button className="px-8 py-4 bg-blue-300 text-white text-lg rounded hover:bg-blue-400" onClick={() => {goToNextWord(addPrediction, setTargetIndex, setOutput1, setOutput2, setSketchHasChanged, handleClearCanvas, false, setGameStartTime);}}>Skip</button>
+              <button className="px-8 py-4 bg-red-300 text-white text-lg rounded hover:bg-red-400" onClick={() => handleEndGame(true)}>Exit</button>
             </div>
           </div>
         </>
