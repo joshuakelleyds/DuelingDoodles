@@ -45,7 +45,7 @@ function SketchCanvas({ onSketchChange, disabled }, ref) {
     context.lineWidth = constants.BRUSH_SIZE;
     context.lineJoin = 'round';
     context.lineCap = 'round';
-    context.strokeStyle = 'black';
+    context.strokeStyle = '#36454F';
     context.shadowColor = 'rgba(0, 0, 0, 0.9)';
     context.shadowBlur = 1;
 

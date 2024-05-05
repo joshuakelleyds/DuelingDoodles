@@ -338,9 +338,9 @@ function App() {
             </div>
             {/* Buttons to handle clear, skip, and exit*/}
             <div className="flex gap-4 justify-center">
-              <button className="px-8 py-4 bg-gray-200 text-[#555555] text-lg rounded hover:bg-gray-300" onClick={handleClearCanvas}>Clear</button>
-              <button className="px-8 py-4 bg-blue-200 text-[#555555] text-lg rounded hover:bg-blue-300" onClick={() => goToNextWord(addPrediction, setTargetIndex, setOutput1, setOutput2, setSketchHasChanged, handleClearCanvas, false, setGameStartTime)}>Skip</button>
-              <button className="px-8 py-4 bg-red-200 text-[#555555] text-lg rounded hover:bg-red-300" onClick={() => handleEndGame(true)}>Exit</button>
+              <button className="px-8 py-4 bg-blue-200 text-[#555555] text-2xl rounded-lg hover:bg-blue-300" onClick={handleClearCanvas}>Clear</button>
+              <button className="px-8 py-4 bg-green-200 text-[#555555] text-2xl rounded-lg hover:bg-green-300" onClick={() => goToNextWord(addPrediction, setTargetIndex, setOutput1, setOutput2, setSketchHasChanged, handleClearCanvas, false, setGameStartTime)}>Skip</button>
+              <button className="px-8 py-4 bg-purple-200 text-[#555555] text-2xl rounded-lg hover:bg-purple-300" onClick={() => handleEndGame(true)}>Exit</button>
             </div>
           </div>
         </>
