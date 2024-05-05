@@ -336,25 +336,60 @@ function App() {
             <PredictionChart output1={graphOutput2} />
           </div>
           <div className='absolute bottom-5 text-center w-full'>
-            <h1 className="text-2xl font-bold mb-3">
-              {output1 && output1[0] && `MobileVIT-XXS Prediction: ${output1[0].label} (${(100 * output1[0].score).toFixed(1)}%)`}
-              <br />
-              {output2 && output2[0] && `MobileVIT-Small Prediction: ${output2[0].label} (${(100 * output2[0].score).toFixed(1)}%)`}
-            </h1>
+            <div className='flex justify-around mb-5'>
+              <div className='w-1/3 text-left'>
+                <h1 className="text-2xl font-bold">
+                  {output1 && output1[0] && (
+                    <>
+                      MobileVIT-XXS
+                      <br />
+                      Prediction: {output1[0].label} ({(100 * output1[0].score).toFixed(1)}%)
+                    </>
+                  )}
+                </h1>
+              </div>
+              <div className='w-1/3 text-right'>
+                <h1 className="text-2xl font-bold">
+                  {output2 && output2[0] && (
+                    <>
+                      MobileVIT-Small
+                      <br />
+                      Prediction: {output2[0].label} ({(100 * output2[0].score).toFixed(1)}%)
+                    </>
+                  )}
+                </h1>
+              </div>
+            </div>
             <div className='flex gap-2 justify-center'>
-              <button onClick={() => { handleClearCanvas() }}>Clear</button>
-              <button onClick={() => {
-                goToNextWord(addPrediction,
-                  setTargetIndex,
-                  setOutput1,
-                  setOutput2,
-                  setSketchHasChanged,
-                  handleClearCanvas,
-                  false,
-                  setGameStartTime
-                )
-              }}>Skip</button>
-              <button onClick={() => { handleEndGame(true) }}>Exit</button>
+              <button
+                className='px-4 py-2 bg-gray-300 rounded'
+                onClick={handleClearCanvas}
+              >
+                Clear
+              </button>
+              <button
+                className='px-4 py-2 bg-blue-300 rounded'
+                onClick={() => {
+                  goToNextWord(
+                    addPrediction,
+                    setTargetIndex,
+                    setOutput1,
+                    setOutput2,
+                    setSketchHasChanged,
+                    handleClearCanvas,
+                    false,
+                    setGameStartTime
+                  );
+                }}
+              >
+                Skip
+              </button>
+              <button
+                className='px-4 py-2 bg-red-300 rounded'
+                onClick={() => { handleEndGame(true); }}
+              >
+                Exit
+              </button>
             </div>
           </div>
         </>

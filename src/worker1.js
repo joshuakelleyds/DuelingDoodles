@@ -61,10 +61,9 @@ self.addEventListener("message", async (event) => {
 class ImageClassificationPipelineSingleton extends Singleton {
     static task = "image-classification";
     // Update model name here
-    static model = "JoshuaKelleyDs/doodle-MobileVIT-small-finetune";
+    static model = "JoshuaKelleyDs/doodle-MobileVIT-xxs-finetune";
     static quantized = constants.DEFAULT_QUANTIZED;
 }
-
 
 
 const classify = async (image) => {
