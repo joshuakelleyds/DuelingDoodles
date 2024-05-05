@@ -9,19 +9,7 @@ import Countdown from './components/Countdown';
 import { AnimatePresence } from 'framer-motion';
 import PredictionChart from './components/PredictionChart';
 
-import {
-  formatTime,
-  shuffleArray,
-  filterAndAdjustScores,
-  createWorkers,
-  startCountdown,
-  startGame,
-  endGame,
-  goToNextWord,
-  checkGameOver,
-  checkWordGuessed,
-  gameLoop,
-} from './GameLogic';
+import {formatTime, shuffleArray, filterAndAdjustScores, createWorkers, startCountdown, startGame, endGame, goToNextWord, checkGameOver, checkWordGuessed, gameLoop} from './GameLogic';
 
 function App() {
   // State variables
@@ -108,7 +96,7 @@ function App() {
     };
   }, []);
 
-  // Update graph outputs every 10 changes or 2 seconds
+  // Update graph outputs every 10 changes or 2 seconds, i.e rendering every time is fucking hefty and stupid 
   useEffect(() => {
     const timer = setTimeout(() => {
       setGraphOutput1(output1);
@@ -329,15 +317,16 @@ function App() {
       {/* The game controls */}
       {isPlaying && (
         <>
+          {/* Displaying the prediciton charts */}
           <div className="absolute left-0 top-0">
-            <PredictionChart output1={graphOutput1} />
+            <PredictionChart predictions={graphOutput1} />
           </div>
 
           <div className="absolute right-0 top-0">
-            <PredictionChart output1={graphOutput2} />
+            <PredictionChart predictions={graphOutput2} />
           </div>
-
           <div className="absolute bottom-5 text-center w-full">
+            {/* Displaying the predictions in text*/}
             <div className="flex justify-center gap-20 mb-5">
               <div className="flex flex-col items-center justify-center w-1/4">
                 <h1 className="text-2xl font-bold text-center">{output1 && output1[0] && (<>MobileVIT-XXS<br />Prediction: {output1[0].label} ({(100 * output1[0].score).toFixed(1)}%)</>)}</h1>
@@ -347,6 +336,7 @@ function App() {
                 <h1 className="text-2xl font-bold text-center">{output2 && output2[0] && (<>MobileVIT-Small<br />Prediction: {output2[0].label} ({(100 * output2[0].score).toFixed(1)}%)</>)}</h1>
               </div>
             </div>
+            {/* Buttons to handle clear, skip, and exit*/}
             <div className="flex gap-4 justify-center">
               <button className="px-8 py-4 bg-gray-300 text-white text-lg rounded hover:bg-gray-400" onClick={handleClearCanvas}>Clear</button>
               <button className="px-8 py-4 bg-blue-300 text-white text-lg rounded hover:bg-blue-400" onClick={() => {goToNextWord(addPrediction, setTargetIndex, setOutput1, setOutput2, setSketchHasChanged, handleClearCanvas, false, setGameStartTime);}}>Skip</button>
