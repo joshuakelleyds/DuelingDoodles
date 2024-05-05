@@ -319,11 +319,11 @@ function App() {
         <>
           {/* Displaying the prediciton charts */}
           <div className="absolute left-0 top-0">
-            <PredictionChart predictions={graphOutput1} />
+            <PredictionChart predictions={graphOutput1} i={1} />
           </div>
 
           <div className="absolute right-0 top-0">
-            <PredictionChart predictions={graphOutput2} />
+            <PredictionChart predictions={graphOutput2} i={2}/>
           </div>
           <div className="absolute bottom-5 text-center w-full">
             {/* Displaying the predictions in text*/}
@@ -338,9 +338,9 @@ function App() {
             </div>
             {/* Buttons to handle clear, skip, and exit*/}
             <div className="flex gap-4 justify-center">
-              <button className="px-8 py-4 bg-gray-300 text-white text-lg rounded hover:bg-gray-400" onClick={handleClearCanvas}>Clear</button>
-              <button className="px-8 py-4 bg-blue-300 text-white text-lg rounded hover:bg-blue-400" onClick={() => {goToNextWord(addPrediction, setTargetIndex, setOutput1, setOutput2, setSketchHasChanged, handleClearCanvas, false, setGameStartTime);}}>Skip</button>
-              <button className="px-8 py-4 bg-red-300 text-white text-lg rounded hover:bg-red-400" onClick={() => handleEndGame(true)}>Exit</button>
+              <button className="px-8 py-4 bg-gray-200 text-[#555555] text-lg rounded hover:bg-gray-300" onClick={handleClearCanvas}>Clear</button>
+              <button className="px-8 py-4 bg-blue-200 text-[#555555] text-lg rounded hover:bg-blue-300" onClick={() => goToNextWord(addPrediction, setTargetIndex, setOutput1, setOutput2, setSketchHasChanged, handleClearCanvas, false, setGameStartTime)}>Skip</button>
+              <button className="px-8 py-4 bg-red-200 text-[#555555] text-lg rounded hover:bg-red-300" onClick={() => handleEndGame(true)}>Exit</button>
             </div>
           </div>
         </>

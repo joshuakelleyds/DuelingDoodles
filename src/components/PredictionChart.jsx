@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as d3 from 'd3';
 
-const PredictionChart = ({ predictions }) => {
+const PredictionChart = ({ predictions, i }) => {
   const chartRef = useRef(null);
   const [simulation, setSimulation] = useState(null);
 
@@ -27,7 +27,7 @@ const PredictionChart = ({ predictions }) => {
       .domain([0, 1]) // set the input domain from 0 to 1
       .range(range); // set the output range for circle sizes
 
-    const colorScale = d3.scaleOrdinal(d3.schemeCategory10); // create an ordinal color scale with d3's built-in color scheme
+    const colorScale = i == 1 ? d3.scaleOrdinal(d3.schemePastel1) : d3.scaleOrdinal(d3.schemePastel2); // create an ordinal color scale with d3's built-in color scheme
 
     // stop and remove previous simulation if it exists
     if (simulation) {
@@ -64,7 +64,7 @@ const PredictionChart = ({ predictions }) => {
     node.append('circle') // append a 'circle' element to each 'g'
       .attr('r', d => radiusScale(d.score)) // set the radius of the circle based on the score, using the radius scale
       .style('fill', (_, i) => colorScale(i)) // set the fill color of the circle using the color scale and index
-      .style('fill-opacity', 0.6) // set the fill opacity of the circle
+      .style('fill-opacity', 1) // set the fill opacity of the circle
       .attr('stroke', '#69a2b2') // set the stroke color of the circle
       .style('stroke-width', 2); // set the stroke width of the circle
 
@@ -80,7 +80,7 @@ const PredictionChart = ({ predictions }) => {
         const fontSize = Math.min(radius, radius / (textLength / 3)); // calculate the font size based on the radius and text length
         return `${fontSize}px`; // set the font size in pixels
       })
-      .style('fill', '#FFFFFF'); // set the text color to white
+      .style('fill', '#36454F'); // set the text color to a slightly darker shade of gray
 
     // cleanup function to stop simulation when component unmounts
     return () => {
