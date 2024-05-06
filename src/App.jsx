@@ -218,33 +218,11 @@ function App() {
   }, [gameState, gameCurrentTime, gameStartTime, handleEndGame]);
 
   useEffect(() => {
-    checkWordGuessed(
-      gameState,
-      output1,
-      output2,
-      targets,
-      targetIndex,
-      goToNextWord,
-      addPrediction,
-      setTargetIndex,
-      setOutput1,
-      setOutput2,
-      setSketchHasChanged,
-      handleClearCanvas,
-      setGameStartTime
-    );
+    checkWordGuessed(gameState,output1,output2,targets,targetIndex,goToNextWord,addPrediction,setTargetIndex,setOutput1,setOutput2,setSketchHasChanged,handleClearCanvas,setGameStartTime);
   }, [gameState, output1, output2, targets, targetIndex, goToNextWord, addPrediction, setTargetIndex, setOutput1, setOutput2, setSketchHasChanged, handleClearCanvas, setGameStartTime]);
 
   useEffect(() => {
-    const cleanup = gameLoop(
-      gameState,
-      isPredicting1,
-      isPredicting2,
-      sketchHasChanged,
-      classify,
-      setSketchHasChanged,
-      setGameCurrentTime
-    );
+    const cleanup = gameLoop(gameState,isPredicting1,isPredicting2,sketchHasChanged,classify,setSketchHasChanged,setGameCurrentTime);
     return cleanup;
   }, [gameState, isPredicting1, isPredicting2, sketchHasChanged, classify]);
 
