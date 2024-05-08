@@ -13,7 +13,7 @@ const PredictionChart = ({ predictions, i }) => {
     const height = window.innerHeight; // set height to window height
     const minDimension = Math.min(width, height); // find the smaller dimension (width or height)
 
-    const range = window.innerWidth <= 768 ? [6, 90] : [minDimension * 0.03, minDimension * 0.4]; // check for mobile devices
+    const range = window.innerWidth <= 768 ? [3, 90] : [minDimension * 0.025, minDimension * 0.4]; // check for mobile devices
     const strength = window.innerWidth <= 768 ? .0001 : .005; // check for mobile devices
 
     // create svg element to contain the chart

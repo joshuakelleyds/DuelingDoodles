@@ -84,3 +84,33 @@ button:focus-visible {
 svg {
   background: none !important;
 }
+
+.hand-drawn-table {
+  font-family: 'Virgil';
+}
+
+.hand-drawn-table table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.hand-drawn-table td {
+  border: 2px solid black;
+  padding: 8px;
+  text-align: center;
+  font-size: 18px;
+  font-weight: bold;
+  position: relative;
+}
+
+.hand-drawn-table td::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  border: 2px solid black;
+  border-radius: 4px;
+  z-index: -1;
+}

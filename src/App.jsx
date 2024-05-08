@@ -1,5 +1,5 @@
-// Import necessary dependencies
-import { useCallback, useEffect, useRef, useState } from 'react';
+// App.js
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import './App.css';
 import SketchCanvas from './components/SketchCanvas';
 import constants from './constants';
@@ -8,8 +8,9 @@ import GameOver from './components/GameOver';
 import Countdown from './components/Countdown';
 import { AnimatePresence } from 'framer-motion';
 import PredictionChart from './components/PredictionChart';
-
+import HandDrawnMuiTable from './components/HandDrawnMuiTable';
 import {formatTime, shuffleArray, filterAndAdjustScores, createWorkers, startCountdown, startGame, endGame, goToNextWord, checkGameOver, checkWordGuessed, gameLoop} from './GameLogic';
+import { motion } from 'framer-motion';
 
 function App() {
   // State variables
@@ -30,6 +31,7 @@ function App() {
   const [graphOutput2, setGraphOutput2] = useState(null);
   const [graphUpdateCount1, setGraphUpdateCount1] = useState(0);
   const [graphUpdateCount2, setGraphUpdateCount2] = useState(0);
+  const [isLeaderboardVisible, setIsLeaderboardVisible] = useState(false);
 
   // Refs
   const worker1 = useRef(null);
@@ -180,6 +182,10 @@ function App() {
     }
   };
 
+  const handleLeaderboardClick = () => {
+    setIsLeaderboardVisible((prevState) => !prevState);
+  };
+
   const handleGameOverClick = (playAgain) => {
     if (playAgain) {
       // If playing again, begin the countdown
@@ -256,7 +262,13 @@ function App() {
 
       {/* The main menu */}
       <AnimatePresence initial={false} mode='wait'>
-        {menuVisible && <Menu gameState={gameState} onClick={handleMainClick} />}
+        {menuVisible && (
+          <Menu
+            gameState={gameState}
+            onClick={handleMainClick}
+            onLeaderboardClick={handleLeaderboardClick}
+          />
+        )}
       </AnimatePresence>
 
       {/* The countdown screen */}
@@ -269,6 +281,13 @@ function App() {
         {gameOver && <GameOver predictions={predictions} onClick={handleGameOverClick} />}
       </AnimatePresence>
 
+      {/* The leaderboard */}
+      <AnimatePresence initial={false} mode='wait'>
+        {isLeaderboardVisible && (
+          <HandDrawnMuiTable onClose={handleLeaderboardClick} />
+        )}
+      </AnimatePresence>`
+
       {/* The game UI */}
       {isPlaying && gameCurrentTime !== null && targets && (
         <div className='absolute top-5 text-center'>
@@ -276,19 +295,6 @@ function App() {
           <h3 className='text-2xl'>
             {formatTime(Math.max(constants.GAME_DURATION - (gameCurrentTime - gameStartTime) / 1000, 0))}
           </h3>
-        </div>
-      )}
-
-      {/* Show a message on the main menu */}
-      {menuVisible && (
-        <div className='absolute bottom-4'>
-          Made with{" "}
-          <a
-            className='underline'
-            href='https://github.com/xenova/transformers.js'
-          >
-            🤗 Transformers.js
-          </a>
         </div>
       )}
 
@@ -316,9 +322,9 @@ function App() {
             </div>
             {/* Buttons to handle clear, skip, and exit*/}
             <div className="flex gap-4 justify-center">
-              <button className="px-8 py-4 bg-blue-200 text-[#555555] text-2xl rounded-lg hover:bg-blue-300" onClick={handleClearCanvas}>Clear</button>
-              <button className="px-8 py-4 bg-green-200 text-[#555555] text-2xl rounded-lg hover:bg-green-300" onClick={() => goToNextWord(addPrediction, setTargetIndex, setOutput1, setOutput2, setSketchHasChanged, handleClearCanvas, false, setGameStartTime)}>Skip</button>
-              <button className="px-8 py-4 bg-purple-200 text-[#555555] text-2xl rounded-lg hover:bg-purple-300" onClick={() => handleEndGame(true)}>Exit</button>
+              <button className="px-6 py-2 bg-blue-200 text-[#555555] text-xl rounded-lg hover:bg-blue-300" onClick={handleClearCanvas}>Clear</button>
+              <button className="px-6 py-2 bg-green-200 text-[#555555] text-xl rounded-lg hover:bg-green-300" onClick={() => goToNextWord(addPrediction, setTargetIndex, setOutput1, setOutput2, setSketchHasChanged, handleClearCanvas, false, setGameStartTime)}>Skip</button>
+              <button className="px-6 py-2 bg-purple-200 text-[#555555] text-xl rounded-lg hover:bg-purple-300" onClick={() => handleEndGame(true)}>Exit</button>
             </div>
           </div>
         </>
