@@ -1,29 +1,21 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Typography, Box, IconButton, Paper } from '@mui/material';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import Rough from 'roughjs/bundled/rough.esm';
 
-const Leaderboard = ({ onClose }) => {
-  const [tableData, setTableData] = useState([]);
-  const [chartData, setChartData] = useState([]);
-  const tableCanvasRef = React.useRef(null);
-  const chartCanvasRef = React.useRef(null);
-
-  const modelNames = ['Rank', 'Model Name', 'Arena ELO', 'Version', 'Params', 'Quantized?']
-  
-  const generateRandomTableData = () => {
-    const rows = 5;
-    const columns = 5;
-    return Array(rows)
-      .fill()
-      .map(() =>
-        Array(columns)
-          .fill()
-          .map(() => Math.floor(Math.random() * 100))
-      );
-  };
+const Leaderboard = ({
+  initialTableData,
+  initialChartData,
+  modelNames = [],
+  tableStyleOptions = {},
+  chartStyleOptions = {},
+  onClose,
+}) => {
+  const [tableData, setTableData] = useState(initialTableData || []);
+  const [chartData, setChartData] = useState(initialChartData || []);
+  const tableCanvasRef = useRef(null);
+  const chartCanvasRef = useRef(null);
 
   const resizeCanvas = (canvas, width, height) => {
     canvas.width = width;
@@ -31,11 +23,21 @@ const Leaderboard = ({ onClose }) => {
   };
 
   useEffect(() => {
-    const newTableData = generateRandomTableData();
-    setTableData(newTableData);
-    setChartData(newTableData[0]);
-  }, []);
-  
+    const handleResize = () => {
+      const tableWidth = Math.min(window.innerWidth * 0.45, 800);
+      const tableHeight = Math.min(window.innerHeight * 0.35, 500);
+      const chartWidth = Math.min(window.innerWidth * 0.45, 800);
+      const chartHeight = Math.min(window.innerHeight * 0.35, 500);
+
+      drawTable(tableWidth, tableHeight);
+      drawChart(chartWidth, chartHeight);
+    };
+
+    handleResize(); // Initial draw
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [tableData, chartData]);
+
   const drawTable = (width, height) => {
     if (tableCanvasRef.current) {
       const tableCanvas = tableCanvasRef.current;
@@ -51,8 +53,8 @@ const Leaderboard = ({ onClose }) => {
       const cellHeight = Math.floor(height / (numRows + 1)) - 2;
       const headerFontSize = Math.floor(cellHeight * 0.3);
       const cellFontSize = Math.floor(cellHeight * 0.3);
-      const headerColors = ['#b3e2cd', '#fdcdac', '#cbd5e8', '#f4cae4', '#e6f5c9', '#fff2ae', '#f1e2cc', '#cccccc'];
-      const cellColor = '#FFFFFF';
+      const headerColors = tableStyleOptions.headerColors || ['#b3e2cd', '#fdcdac', '#cbd5e8', '#f4cae4', '#e6f5c9', '#fff2ae', '#f1e2cc', '#cccccc'];
+      const cellColor = tableStyleOptions.cellColor || '#FFFFFF';
 
       // Draw header cells
       tableData[0]?.forEach((_, index) => {
@@ -60,16 +62,19 @@ const Leaderboard = ({ onClose }) => {
         const color = headerColors[index % headerColors.length];
         tableRoughCanvas.rectangle(x, 0, cellWidth, cellHeight, {
           fill: color,
-          fillStyle: 'solid',
-          roughness: 1.5,
-          bowing: 2,
+          fillStyle: 'hachure',
+          fillWeight: 10,
+          hachureAngle: 30,
+          roughness: 4,
+          bowing: 1,
           stroke: 'grey',
-          strokeWidth: 1,
+          strokeWidth: 3,
         });
         tableCtx.font = `${headerFontSize}px Virgil`;
-        tableCtx.fillStyle = 'black';
+        tableCtx.fillStyle = 'grey';
         tableCtx.textAlign = 'center';
         tableCtx.textBaseline = 'middle';
+        tableCtx.imageSmoothingEnabled = true;
         tableCtx.fillText(`${modelNames[index]}`, x + cellWidth / 2, cellHeight / 2);
       });
 
@@ -81,18 +86,13 @@ const Leaderboard = ({ onClose }) => {
           tableRoughCanvas.rectangle(x, y, cellWidth, cellHeight, {
             fill: cellColor,
             fillStyle: 'solid',
-            roughness: 1.5,
-            bowing: 2,
-            strokeWidth: 1,
-            fillWeight: 2,
-            hachureAngle: 60,
-            hachureGap: 4,
-            curveStepCount: 4,
-            stroke: 'black',
-            strokeWidth: 0.5,
+            roughness: 3,
+            bowing: 1,
+            stroke: 'grey',
+            strokeWidth: 2,
           });
           tableCtx.font = `${cellFontSize}px Virgil`;
-          tableCtx.fillStyle = 'black';
+          tableCtx.fillStyle = 'grey';
           tableCtx.textAlign = 'center';
           tableCtx.textBaseline = 'middle';
           tableCtx.fillText(cell.toString(), x + cellWidth / 2, y + cellHeight / 2);
@@ -115,7 +115,7 @@ const Leaderboard = ({ onClose }) => {
       const chartX = 30;
       const chartY = 30;
       const fontSize = Math.floor(maxBarHeight * 0.1);
-      const colors = ['#b3e2cd', '#fdcdac', '#cbd5e8', '#f4cae4', '#e6f5c9', '#fff2ae', '#f1e2cc', '#cccccc'];
+      const colors = chartStyleOptions.colors || ['#b3e2cd', '#fdcdac', '#cbd5e8', '#f4cae4', '#e6f5c9', '#fff2ae', '#f1e2cc', '#cccccc'];
 
       // Draw bar chart
       chartData.forEach((value, index) => {
@@ -126,8 +126,11 @@ const Leaderboard = ({ onClose }) => {
 
         chartRoughCanvas.rectangle(x, y, barWidth, barHeight, {
           fill: color,
-          fillStyle: 'solid',
-          roughness: 1,
+          fillStyle: 'hachure',
+          fillWeight: 10,
+          hachureAngle: 30,
+          roughness: 4,
+          bowing: 1,
           strokeWidth: 3,
           stroke: 'grey',
         });
@@ -140,26 +143,9 @@ const Leaderboard = ({ onClose }) => {
     }
   };
 
-  useEffect(() => {
-    const handleResize = () => {
-      const tableWidth = Math.min(window.innerWidth * 0.45, 800);
-      const tableHeight = Math.min(window.innerHeight * 0.35, 500);
-      const chartWidth = Math.min(window.innerWidth * 0.45, 800);
-      const chartHeight = Math.min(window.innerHeight * 0.35, 500);
-
-      drawTable(tableWidth, tableHeight);
-      drawChart(chartWidth, chartHeight);
-    };
-
-    handleResize(); // Initial draw
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, [tableData, chartData]);
-
   const handleRefresh = () => {
-    const newTableData = generateRandomTableData();;
-    setTableData(newTableData);
-    setChartData(newTableData[0]);
+    setTableData(initialTableData || []);
+    setChartData(initialChartData || []);
   };
 
   return (
@@ -202,7 +188,7 @@ const Leaderboard = ({ onClose }) => {
           }}
         >
           <canvas ref={tableCanvasRef} style={{ marginLeft: '0%' }} />
-          <canvas ref={chartCanvasRef} style={{  marginRight: '0%' }} />
+          <canvas ref={chartCanvasRef} style={{ marginRight: '0%' }} />
         </div>
         <Box display="flex" justifyContent="flex-end" mt={4}>
           <button

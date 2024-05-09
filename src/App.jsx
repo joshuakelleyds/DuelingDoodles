@@ -284,7 +284,19 @@ function App() {
       {/* The leaderboard */}
       <AnimatePresence initial={false} mode='wait'>
         {isLeaderboardVisible && (
-          <Leaderboard onClose={handleLeaderboardClick} />
+                <Leaderboard
+                  initialTableData={[[10, 20, 30, 40, 50], [60, 70, 80, 90, 100]]}
+                  initialChartData={[80, 75, 85, 90, 95]}
+                  modelNames={['Rank', 'Model', 'ELO', 'Avg Time', 'Params']}
+                  tableStyleOptions={{
+                    headerColors: ["#fbb4ae","#b3cde3","#ccebc5","#decbe4","#fed9a6","#ffffcc","#e5d8bd","#fddaec","#f2f2f2"],
+                    cellColor: '#ffffff',
+                  }}
+                  chartStyleOptions={{
+                    colors: ["#b3e2cd","#fdcdac","#cbd5e8","#f4cae4","#e6f5c9","#fff2ae","#f1e2cc","#cccccc"],
+                  }}
+                  onClose={handleLeaderboardClick}
+              />
         )}
       </AnimatePresence>`
 
