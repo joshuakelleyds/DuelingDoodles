@@ -8,7 +8,7 @@ import GameOver from './components/GameOver';
 import Countdown from './components/Countdown';
 import { AnimatePresence } from 'framer-motion';
 import PredictionChart from './components/PredictionChart';
-import HandDrawnMuiTable from './components/HandDrawnMuiTable';
+import Leaderboard from './components/Leaderboard';
 import {formatTime, shuffleArray, filterAndAdjustScores, createWorkers, startCountdown, startGame, endGame, goToNextWord, checkGameOver, checkWordGuessed, gameLoop} from './GameLogic';
 import { motion } from 'framer-motion';
 
@@ -284,7 +284,7 @@ function App() {
       {/* The leaderboard */}
       <AnimatePresence initial={false} mode='wait'>
         {isLeaderboardVisible && (
-          <HandDrawnMuiTable onClose={handleLeaderboardClick} />
+          <Leaderboard onClose={handleLeaderboardClick} />
         )}
       </AnimatePresence>`
 
