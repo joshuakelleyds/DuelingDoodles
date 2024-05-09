@@ -9,8 +9,7 @@ import Countdown from './components/Countdown';
 import { AnimatePresence } from 'framer-motion';
 import PredictionChart from './components/PredictionChart';
 import Leaderboard from './components/Leaderboard';
-import {formatTime, shuffleArray, filterAndAdjustScores, createWorkers, startCountdown, startGame, endGame, goToNextWord, checkGameOver, checkWordGuessed, gameLoop} from './GameLogic';
-import { motion } from 'framer-motion';
+import { formatTime, shuffleArray, filterAndAdjustScores, createWorkers, startCountdown, startGame, endGame, goToNextWord, checkGameOver, checkWordGuessed, gameLoop } from './GameLogic';
 
 function App() {
   // State variables
@@ -98,7 +97,7 @@ function App() {
     };
   }, []);
 
-  // Update graph outputs every 10 changes or 2 seconds, i.e rendering every time is fucking hefty and stupid 
+  // Update graph outputs every 10 changes or 2 seconds
   useEffect(() => {
     const timer = setTimeout(() => {
       setGraphOutput1(output1);
@@ -224,11 +223,11 @@ function App() {
   }, [gameState, gameCurrentTime, gameStartTime, handleEndGame]);
 
   useEffect(() => {
-    checkWordGuessed(gameState,output1,output2,targets,targetIndex,goToNextWord,addPrediction,setTargetIndex,setOutput1,setOutput2,setSketchHasChanged,handleClearCanvas,setGameStartTime);
+    checkWordGuessed(gameState, output1, output2, targets, targetIndex, goToNextWord, addPrediction, setTargetIndex, setOutput1, setOutput2, setSketchHasChanged, handleClearCanvas, setGameStartTime);
   }, [gameState, output1, output2, targets, targetIndex, goToNextWord, addPrediction, setTargetIndex, setOutput1, setOutput2, setSketchHasChanged, handleClearCanvas, setGameStartTime]);
 
   useEffect(() => {
-    const cleanup = gameLoop(gameState,isPredicting1,isPredicting2,sketchHasChanged,classify,setSketchHasChanged,setGameCurrentTime);
+    const cleanup = gameLoop(gameState, isPredicting1, isPredicting2, sketchHasChanged, classify, setSketchHasChanged, setGameCurrentTime);
     return cleanup;
   }, [gameState, isPredicting1, isPredicting2, sketchHasChanged, classify]);
 
@@ -247,6 +246,91 @@ function App() {
   const isPlaying = gameState === 'playing';
   const countdownVisible = gameState === 'countdown';
   const gameOver = gameState === 'end';
+
+  const initialTableData = [
+    [1, 'MobileNet', 900, '2s', '1M'],
+    [2, 'ResNet', 850, '2.2s', '2M'],
+    [3, 'EfficientNet', 830, '2.5s', '1.5M'],
+    [4, 'DenseNet', 800, '2.3s', '3M'],
+    [5, 'Inception', 780, '2.7s', '4M'],
+    [6, 'VGG', 770, '3s', '5M'],
+  ];
+
+  const models = initialTableData.map(row => row[1]);
+  const eloValues = initialTableData.map(row => row[2]);
+
+  const graphData = {
+    bar: [models, eloValues],
+    barh: [models, eloValues],
+  };
+
+  const tableStyleOptionsArray = [
+    {
+      headerColors: ['#fbb4ae', '#b3cde3', '#ccebc5', '#decbe4', '#fed9a6', '#ffffcc', '#e5d8bd', '#fddaec', '#f2f2f2'],
+      cellColor: '#ffffff',
+    },
+    {
+      headerColors:["#b3e2cd","#fdcdac","#cbd5e8","#f4cae4","#e6f5c9","#fff2ae","#f1e2cc","#cccccc"],
+      cellColor: '#f7f7f7',
+    },
+  ];
+
+  const tableStyleOptions = tableStyleOptionsArray[0];
+
+  const colNames = ['Rank', 'Model', 'ELO', 'Avg Time', 'Params'];
+
+  const chartOptionsArray = [
+    {
+      type: 'bar',
+      options: {
+        roughness: 1.5,
+        fillStyle: 'hachure',
+        fillWeight: 3,
+        stroke: 'grey',
+        strokeWidth: 2,
+        title: 'Rank',
+      },
+    },
+    {
+      type: 'barh',
+      options: {
+        roughness: 1.5,
+        fillStyle: 'hachure',
+        fillWeight: 2,
+        stroke: 'grey',
+        strokeWidth: 2,
+        title: 'ELO',
+      },
+    },
+    {
+      type: 'line',
+      options: {
+        roughness: 1,
+        fillStyle: 'hachure',
+        fillWeight: 4,
+        stroke: 'blue',
+        strokeWidth: 1.5,
+        title: 'Line Chart',
+      },
+    },
+    {
+      type: 'scatter',
+      options: {
+        roughness: 2.5,
+        fillStyle: 'cross-hatch',
+        fillWeight: 1.5,
+        stroke: 'red',
+        strokeWidth: 1,
+        title: 'Scatter Chart',
+      },
+    },
+  ];
+
+  const chartOptions = chartOptionsArray.reduce((acc, chart) => {
+    acc[chart.type] = chart.options;
+    return acc;
+  }, {});
+
 
   return (
     <>
@@ -284,22 +368,16 @@ function App() {
       {/* The leaderboard */}
       <AnimatePresence initial={false} mode='wait'>
         {isLeaderboardVisible && (
-                <Leaderboard
-                  initialTableData={[[10, 20, 30, 40, 50], [60, 70, 80, 90, 100]]}
-                  initialChartData={[80, 75, 85, 90, 95]}
-                  modelNames={['Rank', 'Model', 'ELO', 'Avg Time', 'Params']}
-                  tableStyleOptions={{
-                    headerColors: ["#fbb4ae","#b3cde3","#ccebc5","#decbe4","#fed9a6","#ffffcc","#e5d8bd","#fddaec","#f2f2f2"],
-                    cellColor: '#ffffff',
-                  }}
-                  chartStyleOptions={{
-                    colors: ["#b3e2cd","#fdcdac","#cbd5e8","#f4cae4","#e6f5c9","#fff2ae","#f1e2cc","#cccccc"],
-                  }}
-                  onClose={handleLeaderboardClick}
-              />
+          <Leaderboard
+          initialTableData={initialTableData}
+          graphData={graphData}
+          colNames={colNames}
+          tableStyleOptions={tableStyleOptions}
+          chartOptions={chartOptions}
+          onClose={handleLeaderboardClick}
+          />
         )}
-      </AnimatePresence>`
-
+      </AnimatePresence>
       {/* The game UI */}
       {isPlaying && gameCurrentTime !== null && targets && (
         <div className='absolute top-5 text-center'>
