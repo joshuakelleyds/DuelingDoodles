@@ -262,6 +262,7 @@ function App() {
   const graphData = {
     bar: [models, eloValues],
     barh: [models, eloValues],
+    barh2: [models, eloValues],
   };
 
   const tableStyleOptionsArray = [
@@ -374,6 +375,7 @@ function App() {
           colNames={colNames}
           tableStyleOptions={tableStyleOptions}
           chartOptions={chartOptions}
+          numGraphs={3}
           onClose={handleLeaderboardClick}
           />
         )}
