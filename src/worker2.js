@@ -46,7 +46,6 @@ self.addEventListener("message", async (event) => {
         data[i] = message.image.data[i * 4 + 3];
     }
     const img = new RawImage(data, message.image.width, message.image.height, 1);
-
     let result = await classify(img);
     if (result === null) return;
 
@@ -61,10 +60,9 @@ self.addEventListener("message", async (event) => {
 class ImageClassificationPipelineSingleton extends Singleton {
     static task = "image-classification";
     // Update model name here
-    static model = "JoshuaKelleyDs/doodle-MobileVIT-small-finetune";
+    static model = "JoshuaKelleyDs/quickdraw-MobileVITV2-1.0-Pretrained";
     static quantized = constants.DEFAULT_QUANTIZED;
 }
-
 
 
 const classify = async (image) => {

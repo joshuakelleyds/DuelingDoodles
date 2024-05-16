@@ -14,7 +14,7 @@
     "@emotion/styled": "^11.11.5",
     "@mui/icons-material": "^5.15.17",
     "@mui/material": "^5.15.16",
-    "@xenova/transformers": "^2.3.1",
+    "@xenova/transformers": "github:xenova/transformers.js",
     "chart.js": "^4.4.2",
     "d3": "^7.9.0",
     "framer-motion": "^10.12.18",

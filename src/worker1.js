@@ -4,6 +4,7 @@ import { pipeline, env, RawImage } from "@xenova/transformers";
 
 // Disable local models
 env.allowLocalModels = false;
+env.disableCache = true;
 
 // Define model factories
 // Ensures only one model is created of each type
@@ -61,7 +62,7 @@ self.addEventListener("message", async (event) => {
 class ImageClassificationPipelineSingleton extends Singleton {
     static task = "image-classification";
     // Update model name here
-    static model = "JoshuaKelleyDs/doodle-MobileVIT-xxs-finetune";
+    static model = "JoshuaKelleyDs/quickdraw-MobileVITV2-1.0-Finetune";
     static quantized = constants.DEFAULT_QUANTIZED;
 }
 

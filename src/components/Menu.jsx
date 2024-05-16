@@ -25,6 +25,8 @@ const dropIn = {
 };
 
 const Menu = ({ onClick, gameState, onLeaderboardClick }) => {
+  const buttonColors = ["#a1d7c1", "#e8b5d6"];
+
   return (
     <motion.div
       initial="hidden"
@@ -44,7 +46,8 @@ const Menu = ({ onClick, gameState, onLeaderboardClick }) => {
         onClick={onClick}
         disabled={gameState !== 'menu'}
         type="button"
-        className={`inline-flex items-center px-4 py-2 font-semibold leading-6 shadow rounded-md text-white bg-indigo-400 hover:bg-indigo-300 transition ease-in-out duration-150 ${
+        style={{ backgroundColor: buttonColors[0] }}
+        className={`inline-flex items-center px-4 py-2 font-semibold leading-6 shadow rounded-md text-white hover:opacity-80 transition ease-in-out duration-150 ${
           gameState === 'loading' ? 'cursor-not-allowed' : ''
         }`}
       >
@@ -75,7 +78,8 @@ const Menu = ({ onClick, gameState, onLeaderboardClick }) => {
       <button
         onClick={onLeaderboardClick}
         type="button"
-        className="inline-flex items-center px-4 py-2 font-semibold leading-6 shadow rounded-md text-white bg-orange-300 hover:bg-orange-200 transition ease-in-out duration-150 mt-4"
+        style={{ backgroundColor: buttonColors[1] }}
+        className="inline-flex items-center px-4 py-2 font-semibold leading-6 shadow rounded-md text-white hover:opacity-80 transition ease-in-out duration-150 mt-4"
       >
         Leaderboard
       </button>
