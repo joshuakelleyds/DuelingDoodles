@@ -1,13 +1,11 @@
 import constants from "./constants";
-
 import { pipeline, env, RawImage } from "@xenova/transformers";
 
-// Disable local models
+// disable local models
 env.allowLocalModels = false;
-env.disableCache = true;
 
-// Define model factories
-// Ensures only one model is created of each type
+// define model factories
+// ensures only one model is created of each type
 class Singleton {
     static task = null;
     static model = null;
@@ -35,23 +33,27 @@ class Singleton {
 self.addEventListener("message", async (event) => {
     const message = event.data;
 
+    if (message.action === 'setModel') {
+        ImageClassificationPipelineSingleton.model = message.modelName;
+        return;
+    }
+
     if (message.action === 'load') {
         await ImageClassificationPipelineSingleton.getInstance();
         self.postMessage({ status: "ready" });
         return;
     }
 
-    // Convert RGBA to grayscale, choose based on alpha channel
+    // convert rgba to grayscale, choose based on alpha channel
     const data = new Uint8ClampedArray(message.image.data.length / 4);
     for (let i = 0; i < data.length; ++i) {
         data[i] = message.image.data[i * 4 + 3];
     }
     const img = new RawImage(data, message.image.width, message.image.height, 1);
-
     let result = await classify(img);
     if (result === null) return;
 
-    // Send the result back to the main thread
+    // send the result back to the main thread
     self.postMessage({
         status: "result",
         task: "image-classification",
@@ -61,19 +63,17 @@ self.addEventListener("message", async (event) => {
 
 class ImageClassificationPipelineSingleton extends Singleton {
     static task = "image-classification";
-    // Update model name here
-    static model = "JoshuaKelleyDs/quickdraw-MobileVITV2-1.0-Finetune";
+    // initially set model to null
+    static model = null;
     static quantized = constants.DEFAULT_QUANTIZED;
 }
 
-
 const classify = async (image) => {
-
     let classifier = await ImageClassificationPipelineSingleton.getInstance();
 
-    // Actually run classification
+    // actually run classification
     let output = await classifier(image, {
-        topk: 0, // Return all classes
+        topk: 0, // return all classes
     }).catch((error) => {
         self.postMessage({
             status: "error",

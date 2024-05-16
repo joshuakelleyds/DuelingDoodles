@@ -11,9 +11,29 @@ import PredictionChart from './components/PredictionChart';
 import Leaderboard from './components/Leaderboard';
 import { formatTime, shuffleArray, filterAndAdjustScores, createWorkers, startCountdown, startGame, endGame, goToNextWord, checkGameOver, checkWordGuessed, gameLoop } from './GameLogic';
 
+const modelPaths = [
+  "JoshuaKelleyDs/quickdraw-MobileVIT-small-finetune",
+  "JoshuaKelleyDs/quickdraw-MobileVIT-xxs-finetune",
+  "JoshuaKelleyDs/quickdraw-DeiT-tiny-finetune",
+  "JoshuaKelleyDs/quickdraw-MobileVITV2-2.0-Finetune",
+  "JoshuaKelleyDs/quickdraw-MobileVITV2-1.0-Finetune",
+  "JoshuaKelleyDs/quickdraw-MobileVITV2-1.0-Pretrained"
+];
+
+const modelNameMap = {
+  "JoshuaKelleyDs/quickdraw-MobileVIT-small-finetune": "MobileVIT-V1-Small Finetune",
+  "JoshuaKelleyDs/quickdraw-MobileVIT-xxs-finetune": "MobileVIT-V1-XXS Finetune",
+  "JoshuaKelleyDs/quickdraw-DeiT-tiny-finetune": "DeiT-Tiny Finetune",
+  "JoshuaKelleyDs/quickdraw-MobileVITV2-2.0-Finetune": "MobileVIT-V2-2.0 Finetune",
+  "JoshuaKelleyDs/quickdraw-MobileVITV2-1.0-Finetune": "MobileVIT-V2-1.0 Finetune",
+  "JoshuaKelleyDs/quickdraw-MobileVITV2-1.0-Pretrained": "MobileVITV2-1.0 Pretrained"
+};
+
 function App() {
   // State variables
   const [ready, setReady] = useState(false);
+  const [worker1Ready, setWorker1Ready] = useState(false);
+  const [worker2Ready, setWorker2Ready] = useState(false);
   const [gameState, setGameState] = useState('menu');
   const [countdown, setCountdown] = useState(constants.COUNTDOWN_TIMER);
   const [gameCurrentTime, setGameCurrentTime] = useState(null);
@@ -31,15 +51,23 @@ function App() {
   const [graphUpdateCount1, setGraphUpdateCount1] = useState(0);
   const [graphUpdateCount2, setGraphUpdateCount2] = useState(0);
   const [isLeaderboardVisible, setIsLeaderboardVisible] = useState(false);
-
-  // Refs
+  
+  const selectedModelsRef = useRef([]);
   const worker1 = useRef(null);
   const worker2 = useRef(null);
   const canvasRef = useRef(null);
 
   useEffect(() => {
+    // Shuffle model paths and select the first two
+    const shuffledModelPaths = [...modelPaths];
+    shuffleArray(shuffledModelPaths);
+    const [model1, model2] = shuffledModelPaths.slice(0, 2);
+    selectedModelsRef.current = [model1, model2];
+  }, []);
+
+  useEffect(() => {
     // Create worker instances
-    const { worker1: createdWorker1, worker2: createdWorker2 } = createWorkers();
+    const { worker1: createdWorker1, worker2: createdWorker2 } = createWorkers(selectedModelsRef.current[0], selectedModelsRef.current[1]);
     worker1.current = createdWorker1;
     worker2.current = createdWorker2;
 
@@ -49,6 +77,7 @@ function App() {
 
       switch (result.status) {
         case 'ready':
+          setWorker1Ready(true);
           break;
 
         case 'update':
@@ -67,10 +96,10 @@ function App() {
     // Message handler for worker 2
     const onMessageReceived2 = (e) => {
       const result = e.data;
+
       switch (result.status) {
         case 'ready':
-          setReady(true);
-          beginCountdown();
+          setWorker2Ready(true);
           break;
 
         case 'update':
@@ -96,6 +125,13 @@ function App() {
       worker2.current.removeEventListener('message', onMessageReceived2);
     };
   }, []);
+
+  useEffect(() => {
+    if (worker1Ready && worker2Ready) {
+      setReady(true);
+      beginCountdown();
+    }
+  }, [worker1Ready, worker2Ready]);
 
   // Update graph outputs every 10 changes or 2 seconds
   useEffect(() => {
@@ -405,11 +441,11 @@ function App() {
             {/* Displaying the predictions in text*/}
             <div className="flex justify-center gap-20 mb-5">
               <div className="flex flex-col items-center justify-center w-1/4">
-                <h1 className="text-2xl font-bold text-center">{output1 && output1[0] && (<>MobileVIT-XXS<br />Prediction: {output1[0].label} ({(100 * output1[0].score).toFixed(1)}%)</>)}</h1>
+                <h1 className="text-2xl font-bold text-center">{output1 && output1[0] && (<>{modelNameMap[selectedModelsRef.current[0]]}<br />Prediction: {output1[0].label} ({(100 * output1[0].score).toFixed(1)}%)</>)}</h1>
               </div>
 
               <div className="flex flex-col items-center justify-center w-1/4">
-                <h1 className="text-2xl font-bold text-center">{output2 && output2[0] && (<>MobileVIT-Small<br />Prediction: {output2[0].label} ({(100 * output2[0].score).toFixed(1)}%)</>)}</h1>
+                <h1 className="text-2xl font-bold text-center">{output2 && output2[0] && (<>{modelNameMap[selectedModelsRef.current[1]]}<br />Prediction: {output2[0].label} ({(100 * output2[0].score).toFixed(1)}%)</>)}</h1>
               </div>
             </div>
             {/* Buttons to handle clear, skip, and exit*/}

@@ -26,10 +26,9 @@ const Leaderboard = ({
 
   // memoized table dimensions calculation to avoid recalculating on every render
   const [tableWidth, tableHeight] = useMemo(() => {
-    return [
-      isMobile ? Math.floor(window.innerWidth * 0.7) : Math.floor(window.innerWidth * 0.4),
-      isMobile ? Math.floor(window.innerHeight * 0.6) : Math.floor(window.innerHeight * 0.65),
-    ];
+    const width = isMobile ? Math.floor(window.innerWidth * 0.7) : Math.floor(window.innerWidth * 0.4);
+    const height = isMobile ? Math.floor(window.innerHeight * 0.6) : Math.floor(window.innerHeight * 0.65);
+    return [width, height];
   }, [isMobile]);
 
   // function to resize the canvas
@@ -60,14 +59,11 @@ const Leaderboard = ({
         // calculate cell dimensions
         const cellWidth = Math.floor(width / Math.max(numCols, 1)) - 2;
         const cellHeight = Math.floor(height / (numRows + 1)) - 2;
-        // adjust header font size based on device type
-        const headerFontSize = isMobile
-          ? `${Math.min(Math.floor(cellHeight * 0.08), Math.floor(cellWidth * 0.08))}vmin`
-          : `${Math.min(Math.floor(cellHeight * 0.04), Math.floor(cellWidth * 0.04))}vmin`;
-        // adjust cell font size based on device type
-        const cellFontSize = isMobile
-          ? `${Math.min(Math.floor(cellHeight * 0.08), Math.floor(cellWidth * 0.08))}vmin`
-          : `${Math.min(Math.floor(cellHeight * 0.04), Math.floor(cellWidth * 0.04))}vmin`;
+
+        // calculate font sizes
+        const headerFontSize = `${Math.min(Math.floor(cellHeight * 0.035), Math.floor(cellWidth * 0.035))}vmin`;
+        const cellFontSize = `${Math.min(Math.floor(cellHeight * 0.035), Math.floor(cellWidth * 0.035))}vmin`;
+
         // get header colors from style options or use defaults
         const headerColors = tableStyleOptions.headerColors || ['#fbb4ae', '#b3cde3', '#ccebc5', '#decbe4', '#fed9a6', '#ffffcc', '#e5d8bd', '#fddaec', '#f2f2f2'];
         // get cell color from style options or use default
@@ -124,7 +120,7 @@ const Leaderboard = ({
         });
       }
     },
-    [tableData, colNames, tableStyleOptions, isMobile]
+    [tableData, colNames, tableStyleOptions]
   );
 
   // use effect to handle window resize and redraw the table
@@ -147,60 +143,63 @@ const Leaderboard = ({
   }, [initialTableData]);
 
   // function to render graphs based on graph type
-  const renderGraph = (graphType, [labels, values]) => {
-    // format data for the graph
-    const formattedData = {
-      labels,
-      values,
-    };
+  const renderGraph = useCallback(
+    (graphType, [labels, values]) => {
+      // format data for the graph
+      const formattedData = {
+        labels,
+        values,
+      };
 
-    // default chart options
-    const defaultChartOptions = {
-      roughness: 2,
-      fillStyle: 'hachure',
-      fillWeight: 3,
-      stroke: 'grey',
-      strokeWidth: 1,
-      title: 'model performance',
-      fontSize: 'min(2vw, 2vh)',
-      titleFontSize: 'min(3vw, 3vh)',
-    };
+      // default chart options
+      const defaultChartOptions = {
+        roughness: 2,
+        fillStyle: 'hachure',
+        fillWeight: 3,
+        stroke: 'grey',
+        strokeWidth: 1,
+        title: 'model performance',
+        fontSize: 'min(2vw, 2vh)',
+        titleFontSize: 'min(3vw, 3vh)',
+      };
 
-    // merge default chart options with user-provided options
-    const graphOptions = {
-      ...defaultChartOptions,
-      ...(chartOptions[graphType] || {}),
-    };
+      // merge default chart options with user-provided options
+      const graphOptions = {
+        ...defaultChartOptions,
+        ...(chartOptions[graphType] || {}),
+      };
 
-    // common props for all graph types
-    const commonProps = {
-      data: formattedData,
-      labels: 'labels',
-      values: 'values',
-      ...graphOptions,
-      width: isMobile ? Math.floor(window.innerWidth * 0.9) : Math.floor(window.innerWidth * 0.35),
-      height: isMobile ? Math.floor(window.innerHeight * 0.5 / numGraphs) : Math.floor(window.innerHeight * 0.7 / numGraphs),
-      font: 'Virgil',
-      style: { marginBottom: '20px' },
-    };
+      // common props for all graph types
+      const commonProps = {
+        data: formattedData,
+        labels: 'labels',
+        values: 'values',
+        ...graphOptions,
+        width: isMobile ? Math.floor(window.innerWidth * 0.9) : Math.floor(window.innerWidth * 0.35),
+        height: isMobile ? Math.floor(window.innerHeight * 0.5 / numGraphs) : Math.floor(window.innerHeight * 0.7 / numGraphs),
+        font: 'Virgil',
+        style: { marginBottom: '20px' },
+      };
 
-    // render different graph types based on graphType
-    switch (graphType) {
-      case 'bar':
-        return <Bar {...commonProps} color="#cbd5e8" />;
-      case 'barh':
-        return <BarH {...commonProps} color="#ccebc5" />;
-      case 'barh2':
+      // render different graph types based on graphType
+      switch (graphType) {
+        case 'bar':
+          return <Bar {...commonProps} color="#cbd5e8" />;
+        case 'barh':
           return <BarH {...commonProps} color="#ccebc5" />;
-      case 'line':
-        const lineData = values.map((value, index) => ({ x: index + 1, y: value }));
-        return <Line {...commonProps} data={lineData} colors={['#f4cae4', '#e6f5c9']} />;
-      case 'scatter':
-        return <Scatter {...commonProps} radius={10} color="#fff2ae" />;
-      default:
-        return null;
-    }
-  };
+        case 'barh2':
+          return <BarH {...commonProps} color="#ccebc5" />;
+        case 'line':
+          const lineData = values.map((value, index) => ({ x: index + 1, y: value }));
+          return <Line {...commonProps} data={lineData} colors={['#f4cae4', '#e6f5c9']} />;
+        case 'scatter':
+          return <Scatter {...commonProps} radius={10} color="#fff2ae" />;
+        default:
+          return null;
+      }
+    },
+    [isMobile, numGraphs, chartOptions]
+  );
 
   // render the leaderboard component
   return (

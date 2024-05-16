@@ -46,7 +46,7 @@ export const filterAndAdjustScores = (data, timeSpentDrawing) => {
   return filteredResult;
 };
 
-export const createWorkers = () => {
+export const createWorkers = (modelName1,modelName2) => {
   try {
     // creates two web workers for parallel processing
     const worker1 = new Worker(new URL('./worker1.js', import.meta.url), {
@@ -57,12 +57,17 @@ export const createWorkers = () => {
       type: 'module',
     });
 
+    // send the model name to the workers
+    worker1.postMessage({ action: 'setModel', modelName: modelName1 });
+    worker2.postMessage({ action: 'setModel', modelName: modelName2 });
+
     return { worker1, worker2 };
   } catch (error) {
     console.error('Error creating workers:', error);
     return null;
   }
 };
+
 
 export const startCountdown = (setCountdown, setGameState) => {
   // starts the countdown timer and sets the game state to 'countdown'
