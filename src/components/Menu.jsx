@@ -59,7 +59,7 @@ const Model = () => {
     ref: modelRef,
     object: gltf.scene,
     position: [0, 0, 0],
-    scale: [1, 1, 1],
+    scale: [.55, .55, .55],
   });
 };
 
@@ -107,10 +107,10 @@ const Menu = ({ onClick, gameState, onLeaderboardClick }) => {
         { fallback: null, key: 'suspense' },
         React.createElement(Canvas, {
           className: 'mb-8',
-          style: { width: '300px', height: '300px' },
+          style: { width: '400px', height: '400px' },
           key: 'canvas',
         }, [
-          React.createElement('ambientLight', { intensity: 0.8, key: 'ambientLight' }),
+          React.createElement('ambientLight', { intensity: 1, key: 'ambientLight' }),
           React.createElement(Model, { key: 'model' }),
         ]),
       ),

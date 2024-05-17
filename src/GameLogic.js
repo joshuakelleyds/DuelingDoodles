@@ -131,14 +131,42 @@ export const checkGameOver = (gameState, gameCurrentTime, gameStartTime, endGame
   }
 };
 
-export const checkWordGuessed = (gameState, output1, output2, targets, targetIndex, goToNextWord, addPrediction, setTargetIndex, setOutput1, setOutput2, setSketchHasChanged, handleClearCanvas, setGameStartTime) => {
+export const checkWordGuessed = (gameState, output1, output2, targets, targetIndex, goToNextWord, addPrediction, setTargetIndex, setOutput1, setOutput2, setSketchHasChanged, handleClearCanvas, setGameStartTime, modelStats, setModelStats
+) => {
   // checks if the current word has been guessed correctly based on the outputs and moves to the next word if correct
   if (gameState === 'playing' && output1 !== null && output2 !== null && targets !== null) {
-    if (targets[targetIndex] === output1[0].label || targets[targetIndex] === output2[0].label) {
+    const target = targets[targetIndex]; // get the current target word
+    const predictedByModel1 = target === output1[0].label; // check if model 1 predicted correctly
+    const predictedByModel2 = target === output2[0].label; // check if model 2 predicted correctly
+    const currentTime = new Date(); // get the current time
+
+    let updatedModelStats = { ...modelStats }; // copy the current stats
+
+    if (predictedByModel1 || predictedByModel2) { // if either model predicted correctly
+      if (predictedByModel1) {
+        console.log("Model 1 Predicted correctly");
+        updatedModelStats.correctGuessesModel1++; // increment correct guesses counter for model 1
+        updatedModelStats.lastPredictionTimeModel1 = currentTime; // update last prediction time for model 1
+      }
+      if (predictedByModel2) {
+        console.log("Model 2 Predicted correctly");
+        updatedModelStats.correctGuessesModel2++; // increment correct guesses counter for model 2
+        updatedModelStats.lastPredictionTimeModel2 = currentTime; // update last prediction time for model 2
+      }
+
+      // update the stats in the state
+      setModelStats(updatedModelStats);
+
+      // log the counters and last prediction times for debugging purposes
+      console.log(`Model 1 - Correct Guesses: ${updatedModelStats.correctGuessesModel1}, Last Prediction Time: ${updatedModelStats.lastPredictionTimeModel1}`);
+      console.log(`Model 2 - Correct Guesses: ${updatedModelStats.correctGuessesModel2}, Last Prediction Time: ${updatedModelStats.lastPredictionTimeModel2}`);
+
+      // proceed to the next word
       goToNextWord(addPrediction, setTargetIndex, setOutput1, setOutput2, setSketchHasChanged, handleClearCanvas, true, setGameStartTime);
     }
   }
 };
+
 
 export const gameLoop = (gameState, isPredicting1, isPredicting2, sketchHasChanged, classify, setSketchHasChanged, setGameCurrentTime) => {
   // runs the game loop, triggering classification if the sketch has changed and updating the current time
@@ -155,4 +183,22 @@ export const gameLoop = (gameState, isPredicting1, isPredicting2, sketchHasChang
       clearInterval(intervalId);
     };
   }
+};
+
+export const generateInitialTableData = (modelStats, selectedModels) => {
+  const modelEloMap = {}; // Map to store ELO ratings
+
+  const model1 = selectedModels[0];
+  const model2 = selectedModels[1];
+
+  modelEloMap[model1] = modelStats.correctGuessesModel1;
+  modelEloMap[model2] = modelStats.correctGuessesModel2;
+
+  const sortedModels = Object.entries(modelEloMap).sort((a, b) => b[1] - a[1]);
+
+  return sortedModels.map(([model, elo], index) => {
+    const modelName = constants.MODELNAMEMAP[model];
+    const params = constants.MODELPARAMS[model];
+    return [index + 1, modelName, elo, 'TBD', params];
+  });
 };
