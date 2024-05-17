@@ -11,23 +11,6 @@ import PredictionChart from './components/PredictionChart';
 import Leaderboard from './components/Leaderboard';
 import { formatTime, shuffleArray, filterAndAdjustScores, createWorkers, startCountdown, startGame, endGame, goToNextWord, checkGameOver, checkWordGuessed, gameLoop } from './GameLogic';
 
-const modelPaths = [
-  "JoshuaKelleyDs/quickdraw-MobileVIT-small-finetune",
-  "JoshuaKelleyDs/quickdraw-MobileVIT-xxs-finetune",
-  "JoshuaKelleyDs/quickdraw-DeiT-tiny-finetune",
-  "JoshuaKelleyDs/quickdraw-MobileVITV2-2.0-Finetune",
-  "JoshuaKelleyDs/quickdraw-MobileVITV2-1.0-Finetune",
-  "JoshuaKelleyDs/quickdraw-MobileVITV2-1.0-Pretrained"
-];
-
-const modelNameMap = {
-  "JoshuaKelleyDs/quickdraw-MobileVIT-small-finetune": "MobileVIT-V1-Small Finetune",
-  "JoshuaKelleyDs/quickdraw-MobileVIT-xxs-finetune": "MobileVIT-V1-XXS Finetune",
-  "JoshuaKelleyDs/quickdraw-DeiT-tiny-finetune": "DeiT-Tiny Finetune",
-  "JoshuaKelleyDs/quickdraw-MobileVITV2-2.0-Finetune": "MobileVIT-V2-2.0 Finetune",
-  "JoshuaKelleyDs/quickdraw-MobileVITV2-1.0-Finetune": "MobileVIT-V2-1.0 Finetune",
-  "JoshuaKelleyDs/quickdraw-MobileVITV2-1.0-Pretrained": "MobileVITV2-1.0 Pretrained"
-};
 
 function App() {
   // State variables
@@ -59,15 +42,15 @@ function App() {
 
   useEffect(() => {
     // Select two random models from the modelPaths array
-    const randomIndex1 = Math.floor(Math.random() * modelPaths.length);
-    let randomIndex2 = Math.floor(Math.random() * modelPaths.length);
+    const randomIndex1 = Math.floor(Math.random() * constants.MODELPATHS.length);
+    let randomIndex2 = Math.floor(Math.random() * constants.MODELPATHS.length);
   
     // Ensure that the second index is different from the first index
     while (randomIndex2 === randomIndex1) {
-      randomIndex2 = Math.floor(Math.random() * modelPaths.length);
+      randomIndex2 = Math.floor(Math.random() * constants.MODELPATHS.length);
     }
   
-    const [model1, model2] = [modelPaths[randomIndex1], modelPaths[randomIndex2]];
+    const [model1, model2] = [constants.MODELPATHS[randomIndex1], constants.MODELPATHS[randomIndex2]];
     selectedModelsRef.current = [model1, model2];
   }, []);
 
@@ -447,11 +430,11 @@ function App() {
             {/* Displaying the predictions in text*/}
             <div className="flex justify-center gap-20 mb-5">
               <div className="flex flex-col items-center justify-center w-1/4">
-                <h1 className="text-2xl font-bold text-center">{output1 && output1[0] && (<>{modelNameMap[selectedModelsRef.current[0]]}<br />Prediction: {output1[0].label} ({(100 * output1[0].score).toFixed(1)}%)</>)}</h1>
+                <h1 className="text-2xl font-bold text-center">{output1 && output1[0] && (<>{constants.MODELNAMEMAP[selectedModelsRef.current[0]]}<br />Prediction: {output1[0].label} ({(100 * output1[0].score).toFixed(1)}%)</>)}</h1>
               </div>
 
               <div className="flex flex-col items-center justify-center w-1/4">
-                <h1 className="text-2xl font-bold text-center">{output2 && output2[0] && (<>{modelNameMap[selectedModelsRef.current[1]]}<br />Prediction: {output2[0].label} ({(100 * output2[0].score).toFixed(1)}%)</>)}</h1>
+                <h1 className="text-2xl font-bold text-center">{output2 && output2[0] && (<>{constants.MODELNAMEMAP[selectedModelsRef.current[1]]}<br />Prediction: {output2[0].label} ({(100 * output2[0].score).toFixed(1)}%)</>)}</h1>
               </div>
             </div>
             {/* Buttons to handle clear, skip, and exit*/}

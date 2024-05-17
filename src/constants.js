@@ -382,4 +382,24 @@ export default {
         "343": "zebra",
         "344": "zigzag"
     },
+    MODELPATHS: [
+        "JoshuaKelleyDs/quickdraw-MobileVIT-small-finetune",
+        "JoshuaKelleyDs/quickdraw-MobileVIT-xxs-finetune",
+        "JoshuaKelleyDs/quickdraw-DeiT-tiny-finetune",
+        "JoshuaKelleyDs/quickdraw-MobileVITV2-2.0-Finetune",
+        "JoshuaKelleyDs/quickdraw-MobileVITV2-1.0-Finetune",
+        "JoshuaKelleyDs/quickdraw-MobileVITV2-1.0-Pretrained",
+        "JoshuaKelleyDs/quickdraw-ConvNeXT-Tiny-Finetune", 
+        "JoshuaKelleyDs/quickdraw-ConvNeXTV2-Tiny-Finetune"
+      ],
+      MODELNAMEMAP: {
+        "JoshuaKelleyDs/quickdraw-MobileVIT-small-finetune": "MobileVIT-V1-Small Finetune",
+        "JoshuaKelleyDs/quickdraw-MobileVIT-xxs-finetune": "MobileVIT-V1-XXS Finetune",
+        "JoshuaKelleyDs/quickdraw-DeiT-tiny-finetune": "DeiT-Tiny Finetune",
+        "JoshuaKelleyDs/quickdraw-MobileVITV2-2.0-Finetune": "MobileVIT-V2-2.0 Finetune",
+        "JoshuaKelleyDs/quickdraw-MobileVITV2-1.0-Finetune": "MobileVIT-V2-1.0 Finetune",
+        "JoshuaKelleyDs/quickdraw-MobileVITV2-1.0-Pretrained": "MobileVITV2-1.0 Pretrained",
+        "JoshuaKelleyDs/quickdraw-ConvNeXT-Tiny-Finetune": "ConvNeXT-Tiny Finetune",
+        "JoshuaKelleyDs/quickdraw-ConvNeXTV2-Tiny-Finetune": "ConvNeXTV2-Tiny Finetune",
+      },
 };
