@@ -1,7 +1,7 @@
 // import dependencies
 import React, { Suspense, useRef, useMemo, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Canvas, useLoader, useFrame } from 'react-three-fiber';
+import { Canvas, useLoader, useFrame } from '@react-three/fiber';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader';
 import doodlebobModel from '../assets/new.glb';
