@@ -58,10 +58,16 @@ function App() {
   const canvasRef = useRef(null);
 
   useEffect(() => {
-    // Shuffle model paths and select the first two
-    const shuffledModelPaths = [...modelPaths];
-    shuffleArray(shuffledModelPaths);
-    const [model1, model2] = shuffledModelPaths.slice(0, 2);
+    // Select two random models from the modelPaths array
+    const randomIndex1 = Math.floor(Math.random() * modelPaths.length);
+    let randomIndex2 = Math.floor(Math.random() * modelPaths.length);
+  
+    // Ensure that the second index is different from the first index
+    while (randomIndex2 === randomIndex1) {
+      randomIndex2 = Math.floor(Math.random() * modelPaths.length);
+    }
+  
+    const [model1, model2] = [modelPaths[randomIndex1], modelPaths[randomIndex2]];
     selectedModelsRef.current = [model1, model2];
   }, []);
 
