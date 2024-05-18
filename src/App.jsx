@@ -278,7 +278,6 @@ function App() {
   const countdownVisible = gameState === 'countdown';
   const gameOver = gameState === 'end';
 
-  // const initialTableData = generateInitialTableData(modelStats, selectedModelsRef.current);
   const initialTableData = [
     [1, 'MobileVIT-V2-1.0', 3, 'TBD', '4.58M'],
     [2, 'MobileVIT-V2-0.5', 0.6, 70.18, '1.37M'],
@@ -288,13 +287,18 @@ function App() {
     [6, 'CrossViT-15', 27.4, 81.95, '27.37M'],
     [7, 'CrossViT-18', 43.2, 82.29, '43.21M'],
   ];
-
+  
+  // Convert parameter values to numbers
+  const parseParams = (param) => parseFloat(param.replace('M', '')) * 1e6;
+  
   const models = initialTableData.map(row => row[1]);
   const eloValues = initialTableData.map(row => row[2]);
-
+  const params = initialTableData.map(row => parseParams(row[4]));
+  
   const graphData = {
     bar: [models, eloValues],
-    barh: [models, eloValues],
+    barH: [models, eloValues],
+    pie: [models, params],
   };
 
   const chartOptions = constants.chartOptionsArray.reduce((acc, chart) => {

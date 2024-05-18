@@ -1,13 +1,11 @@
-// import necessary dependencies for the component
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Typography, Box, IconButton, Paper } from '@mui/material';
 import RefreshIcon from '@mui/icons-material/Refresh';
-import Rough from 'roughjs/bundled/rough.esm'; // import roughjs for drawing rough-style elements
-import { Bar, BarH, Line, Scatter } from 'react-roughviz'; // import react-roughviz for rough-style charts
-import { mobileTabletCheck } from '../utils'; // utility to check if device is mobile or tablet
+import Rough from 'roughjs/bundled/rough.esm';
+import { Bar, BarH, Line, Scatter, Pie } from 'react-roughviz';
+import { mobileTabletCheck } from '../utils';
 
-// define the leaderboard component
 const Leaderboard = ({
   initialTableData,
   graphData = {},
@@ -19,24 +17,25 @@ const Leaderboard = ({
 }) => {
   // state to store the table data
   const [tableData, setTableData] = useState(initialTableData || []);
-  // ref to store the table canvas element
+  // ref to store the canvas element for the table
   const tableCanvasRef = useRef(null);
   // check if the device is mobile or tablet
   const isMobile = mobileTabletCheck();
-  const dpr = window.devicePixelRatio || 1; // get device pixel ratio
+  // get the device pixel ratio for high-resolution rendering
+  const dpr = window.devicePixelRatio || 1;
 
-  // memoized table dimensions calculation to avoid recalculating on every render
+  // calculate the table dimensions based on the device type
   const [tableWidth, tableHeight] = useMemo(() => {
     const width = isMobile ? Math.min(window.innerWidth * 0.9, 500) : Math.floor(window.innerWidth * 0.6);
     const height = isMobile ? Math.min(window.innerHeight * 0.5, 300) : Math.floor(window.innerHeight * 0.65);
     return [width, height];
   }, [isMobile]);
 
-  // function to resize the canvas based on content
+  // resize the canvas based on the table data and device type
   const resizeCanvas = useCallback((canvas, columnWidths) => {
     const totalWidth = columnWidths.reduce((sum, width) => sum + width, 0);
     const numRows = tableData.length;
-    const cellHeight = Math.floor(tableHeight / (numRows + 1)) + 5; // slightly increase the cell height
+    const cellHeight = Math.floor(tableHeight / (numRows + 1)) + 5;
     const totalHeight = (numRows + 1) * cellHeight;
 
     if (isMobile) {
@@ -45,19 +44,19 @@ const Leaderboard = ({
       canvas.style.width = `${Math.min(totalWidth, tableWidth)}px`;
       canvas.style.height = `${Math.min(totalHeight, tableHeight)}px`;
       const ctx = canvas.getContext('2d');
-      ctx.scale(dpr, dpr); // scale the canvas to handle high DPI displays
+      ctx.scale(dpr, dpr);
     } else {
       canvas.width = totalWidth;
       canvas.height = totalHeight;
     }
   }, [tableData, tableHeight, tableWidth, isMobile, dpr]);
 
-  // function to calculate column widths based on content
+  // calculate the column widths based on the table data
   const calculateColumnWidths = useCallback((ctx) => {
     const numCols = tableData[0]?.length || 0;
     const maxWidths = Array(numCols).fill(0);
 
-    // calculate maximum width for each column based on cell content
+    // find the maximum width for each column based on cell content
     tableData.forEach((row) => {
       row.forEach((cell, columnIndex) => {
         let cellWidth = ctx.measureText(cell.toString()).width;
@@ -68,7 +67,7 @@ const Leaderboard = ({
       });
     });
 
-    // calculate maximum width for each column based on column names
+    // find the maximum width for each column based on column headers
     colNames.forEach((header, columnIndex) => {
       const headerWidth = ctx.measureText(header).width * 1.3;
       maxWidths[columnIndex] = Math.max(maxWidths[columnIndex], headerWidth) * 2.3;
@@ -77,42 +76,44 @@ const Leaderboard = ({
     return maxWidths;
   }, [tableData, colNames]);
 
-  // function to draw the table on the canvas
+  // draw the table on the canvas
   const drawTable = useCallback(() => {
     if (tableCanvasRef.current) {
       const tableCanvas = tableCanvasRef.current;
       const tableCtx = tableCanvas.getContext('2d');
+      // clear the canvas
       tableCtx.clearRect(0, 0, tableCanvas.width, tableCanvas.height);
+      // create a rough.js canvas for the hand-drawn effect
       const roughCanvas = Rough.canvas(tableCanvas);
 
       const numRows = tableData.length;
 
-      // calculate column widths based on content
+      // calculate the column widths
       const columnWidths = calculateColumnWidths(tableCtx);
-
-      // resize the canvas based on column widths
+      // resize the canvas based on the column widths
       resizeCanvas(tableCanvas, columnWidths);
 
-      // calculate cell height
-      const cellHeight = Math.floor(tableHeight / (numRows + 1)) + 5; // slightly increase the cell height
+      // calculate the cell height based on the number of rows and table height
+      const cellHeight = Math.floor(tableHeight / (numRows + 1)) + 5;
 
-      // detect if the mobile device is in landscape mode
+      // check if the device is in landscape orientation
       const isLandscape = window.innerWidth > window.innerHeight;
 
-      // calculate font sizes
+      // calculate the font sizes for headers and cells based on the device type and orientation
       const headerFontSize = isMobile ? (isLandscape ? '1.5vw' : '4vw') : `${Math.min(Math.floor(cellHeight * 0.08), Math.floor(Math.min(...columnWidths) * 0.08))}vmin`;
       const cellFontSize = isMobile ? (isLandscape ? '1vw' : '3.5vw') : `${Math.min(Math.floor(cellHeight * 0.07), Math.floor(Math.min(...columnWidths) * 0.07))}vmin`;
 
-      // get header colors from style options or use defaults
+      // define the colors for the header cells
       const headerColors = tableStyleOptions.headerColors || ['#fbb4ae', '#b3cde3', '#ccebc5', '#decbe4', '#fed9a6', '#ffffcc', '#e5d8bd', '#fddaec', '#f2f2f2'];
-      // get cell color from style options or use default
+      // define the color for the data cells
       const cellColor = tableStyleOptions.cellColor || '#FFFFFF';
 
-      // draw header cells
+      // draw the header cells
       let currentX = 0;
       colNames.forEach((header, columnIndex) => {
         const cellWidth = columnWidths[columnIndex];
         const color = headerColors[columnIndex % headerColors.length];
+        // draw the header cell rectangle with a hand-drawn effect
         roughCanvas.rectangle(currentX, 0, cellWidth, cellHeight, {
           fill: color,
           fillStyle: 'hachure',
@@ -123,20 +124,23 @@ const Leaderboard = ({
           stroke: 'grey',
           strokeWidth: 3,
         });
+        // set the font style for the header text
         tableCtx.font = `${headerFontSize} Virgil`;
         tableCtx.fillStyle = 'grey';
         tableCtx.textAlign = 'center';
         tableCtx.textBaseline = 'middle';
+        // draw the header text
         tableCtx.fillText(header, currentX + cellWidth / 2, cellHeight / 2);
         currentX += cellWidth;
       });
 
-      // draw data cells
+      // draw the data cells
       tableData.forEach((row, rowIndex) => {
         let currentX = 0;
         row.forEach((cell, columnIndex) => {
           const cellWidth = columnWidths[columnIndex];
           const y = (rowIndex + 1) * cellHeight;
+          // draw the data cell rectangle with a hand-drawn effect
           roughCanvas.rectangle(currentX, y, cellWidth, cellHeight, {
             fill: cellColor,
             fillStyle: 'solid',
@@ -145,10 +149,12 @@ const Leaderboard = ({
             stroke: 'grey',
             strokeWidth: 2,
           });
+          // set the font style for the cell text
           tableCtx.font = `${cellFontSize} Virgil`;
           tableCtx.fillStyle = 'grey';
           tableCtx.textAlign = 'center';
           tableCtx.textBaseline = 'middle';
+          // draw the cell text
           tableCtx.fillText(cell.toString(), currentX + cellWidth / 2, y + cellHeight / 2);
           currentX += cellWidth;
         });
@@ -156,7 +162,7 @@ const Leaderboard = ({
     }
   }, [tableData, colNames, tableStyleOptions, calculateColumnWidths, resizeCanvas, tableHeight, isMobile]);
 
-  // use effect to handle window resize and redraw the table
+  // redraw the table when the component mounts or the table data changes
   useEffect(() => {
     const handleResize = () => {
       drawTable();
@@ -167,34 +173,23 @@ const Leaderboard = ({
     return () => window.removeEventListener('resize', handleResize);
   }, [drawTable]);
 
-  // function to handle refresh button click
+  // handle the refresh button click
   const handleRefresh = useCallback(() => {
     setTableData(initialTableData || []);
   }, [initialTableData]);
 
-  // function to render graphs based on graph type
+  // render the specified graph type
   const renderGraph = useCallback((graphType, [labels, values]) => {
     const formattedData = {
       labels,
       values,
     };
-
-    const defaultChartOptions = {
-      roughness: 2,
-      fillStyle: 'hachure',
-      fillWeight: 3,
-      stroke: 'grey',
-      strokeWidth: 1,
-      title: 'model performance',
-      fontSize: 'min(2vw, 2vh)',
-      titleFontSize: 'min(3vw, 3vh)',
-    };
-
+    // merge default chart options with user-provided chart options
     const graphOptions = {
-      ...defaultChartOptions,
       ...(chartOptions[graphType] || {}),
     };
 
+    // define common props for all graph types
     const commonProps = {
       data: formattedData,
       labels: 'labels',
@@ -208,22 +203,25 @@ const Leaderboard = ({
       style: { marginBottom: '20px' },
     };
 
+    // render the appropriate graph component based on the graph type
     switch (graphType) {
       case 'bar':
         return React.createElement(Bar, { ...commonProps, color: "#cbd5e8" });
       case 'barh':
-        return React.createElement(BarH, { ...commonProps, color: "#ccebc5" });
+        return React.createElement(BarH, { ...commonProps });
       case 'line':
         const lineData = values.map((value, index) => ({ x: index + 1, y: value }));
         return React.createElement(Line, { ...commonProps, data: lineData, colors: ['#f4cae4', '#e6f5c9'] });
       case 'scatter':
-        return React.createElement(Scatter, { ...commonProps, radius: 10, color: "#fff2ae" });
+        return React.createElement(Scatter, { ...commonProps});
+      case 'pie':
+        return React.createElement(Pie, { ...commonProps });
       default:
         return null;
     }
   }, [isMobile, numGraphs, chartOptions]);
 
-  // render leaderboard component
+  // render the leaderboard component
   return React.createElement(motion.div, {
     initial: { opacity: 0, scale: 0.8 },
     animate: { opacity: 1, scale: 1 },
