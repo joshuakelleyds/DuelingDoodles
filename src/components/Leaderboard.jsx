@@ -9,7 +9,7 @@ import { mobileTabletCheck } from '../utils'; // utility to check if device is m
 
 // define the leaderboard component
 const Leaderboard = ({
-  initialTableData, 
+  initialTableData,
   graphData = {},
   colNames = [],
   tableStyleOptions = {},
@@ -213,6 +213,9 @@ const Leaderboard = ({
         return React.createElement(Bar, { ...commonProps, color: "#cbd5e8" });
       case 'barh':
         return React.createElement(BarH, { ...commonProps, color: "#ccebc5" });
+      case 'line':
+        const lineData = values.map((value, index) => ({ x: index + 1, y: value }));
+        return React.createElement(Line, { ...commonProps, data: lineData, colors: ['#f4cae4', '#e6f5c9'] });
       case 'scatter':
         return React.createElement(Scatter, { ...commonProps, radius: 10, color: "#fff2ae" });
       default:
@@ -269,7 +272,7 @@ const Leaderboard = ({
     }
   }, React.createElement("canvas", {
     ref: tableCanvasRef,
-    style: { marginLeft: '0%', width: isMobile ? '100%' : '50%', height: isMobile ? '80vh' : 'auto' }
+    style: { marginLeft: '0%', width: isMobile ? '100%' : '50%', height: isMobile ? '50vh' : 'auto' }
   }), !isMobile && React.createElement("div", {
     style: {
       width: '50%',

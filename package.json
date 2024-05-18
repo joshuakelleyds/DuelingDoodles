@@ -24,6 +24,7 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-roughviz": "^0.1.10",
+    "rough-viz": "^2.0.5",
     "roughjs": "^4.6.6",
     "three": "^0.164.1",
     "vite-plugin-glsl": "^1.3.0"
