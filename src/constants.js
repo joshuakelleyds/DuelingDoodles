@@ -24,9 +24,9 @@ export default {
     "van", // too similar to other types of vehicles
   ],
   PREDICTION_REFRESH_TIME: 10,
-  BRUSH_SIZE: IS_MOBILE ? 12 : 16,
+  BRUSH_SIZE: IS_MOBILE ? 10 : 13,
   TARGET_FPS: 60,
-  GAME_DURATION: 30 + 0.5, // + 0.5 so it doesn't flicker (TODO: change to 60)
+  GAME_DURATION: 1 + 0.5, // + 0.5 so it doesn't flicker (TODO: change to 60)
   COUNTDOWN_TIMER: 3,
   START_REJECT_THRESHOLD: 0.2, // How confident the model should be before starting to reject
   REJECT_TIME_DELAY: 3 * 1000, // How many ms to wait before helping
@@ -417,10 +417,6 @@ export default {
       cellColor: '#f7f7f7',
     },
   ],
-  tableStyleOptions: {
-    headerColors: ['#fbb4ae', '#b3cde3', '#ccebc5', '#decbe4', '#fed9a6', '#ffffcc', '#e5d8bd', '#fddaec', '#f2f2f2'],
-    cellColor: '#ffffff',
-  },
   colNames: ['Rank', 'Model', 'ELO', 'Avg Time', 'Params', 'Correct Guesses'],
   chartOptionsArray: [
     {

@@ -11,7 +11,7 @@ import Leaderboard from './components/Leaderboard';
 import { formatTime, shuffleArray, filterAndAdjustScores, createWorkers, startCountdown, startGame, endGame, goToNextWord, checkGameOver, checkWordGuessed, gameLoop, updateTableData } from './GameLogic';
 
 function App() {
-  // State variables
+  // state variables
   const [ready, setReady] = useState(false);
   const [worker1Ready, setWorker1Ready] = useState(false);
   const [worker2Ready, setWorker2Ready] = useState(false);
@@ -34,12 +34,12 @@ function App() {
   const [isLeaderboardVisible, setIsLeaderboardVisible] = useState(false);
 
   const initialLeaderboardData = constants.MODELPATHS.map((model, index) => [
-    index + 1, // Rank
-    constants.MODELNAMEMAP[model], // Model
-    0, // ELO
-    0, // Avg Time
-    constants.MODELPARAMS[model], // Params
-    0, // Correct Guesses
+    index + 1, // rank
+    constants.MODELNAMEMAP[model], // model
+    0, // elo
+    0, // avg time
+    constants.MODELPARAMS[model], // params
+    0, // correct guesses
   ]);
 
   const [LeaderboardData, setLeaderboardData] = useState(initialLeaderboardData);
@@ -51,7 +51,6 @@ function App() {
     lastPredictionTimeModel2: 0,
   };
 
-  // In your component or wherever you define the state
   const [modelStats, setModelStats] = useState(initialModelStats);
   
   const selectedModelsRef = useRef([]);
@@ -60,11 +59,11 @@ function App() {
   const canvasRef = useRef(null);
 
   useEffect(() => {
-    // Select two random models from the modelPaths array
+    // select two random models from the modelPaths array
     const randomIndex1 = Math.floor(Math.random() * constants.MODELPATHS.length);
     let randomIndex2 = Math.floor(Math.random() * constants.MODELPATHS.length);
   
-    // Ensure that the second index is different from the first index
+    // ensure that the second index is different from the first index
     while (randomIndex2 === randomIndex1) {
       randomIndex2 = Math.floor(Math.random() * constants.MODELPATHS.length);
     }
@@ -74,12 +73,12 @@ function App() {
   }, []);
 
   useEffect(() => {
-    // Create worker instances
+    // create worker instances
     const { worker1: createdWorker1, worker2: createdWorker2 } = createWorkers(selectedModelsRef.current[0], selectedModelsRef.current[1]);
     worker1.current = createdWorker1;
     worker2.current = createdWorker2;
 
-    // Message handler for worker 1
+    // message handler for worker 1
     const onMessageReceived1 = (e) => {
       const result = e.data;
 
@@ -89,7 +88,7 @@ function App() {
           break;
 
         case 'update':
-          // Not used in this code, but can be used for real-time updates from worker1
+          // not used in this code, but can be used for real-time updates from worker1
           break;
 
         case 'result':
@@ -101,7 +100,7 @@ function App() {
       }
     };
 
-    // Message handler for worker 2
+    // message handler for worker 2
     const onMessageReceived2 = (e) => {
       const result = e.data;
 
@@ -111,7 +110,7 @@ function App() {
           break;
 
         case 'update':
-          // Not used in this code, but can be used for real-time updates from worker2
+          // not used in this code, but can be used for real-time updates from worker2
           break;
 
         case 'result':
@@ -123,11 +122,11 @@ function App() {
       }
     };
 
-    // Add message event listeners to workers
+    // add message event listeners to workers
     worker1.current.addEventListener('message', onMessageReceived1);
     worker2.current.addEventListener('message', onMessageReceived2);
 
-    // Cleanup function to remove event listeners when component unmounts
+    // cleanup function to remove event listeners when component unmounts
     return () => {
       worker1.current.removeEventListener('message', onMessageReceived1);
       worker2.current.removeEventListener('message', onMessageReceived2);
@@ -141,7 +140,7 @@ function App() {
     }
   }, [worker1Ready, worker2Ready]);
 
-  // Update graph outputs every 10 changes or 2 seconds
+  // update graph outputs every 10 changes or 2 seconds
   useEffect(() => {
     const timer = setTimeout(() => {
       setGraphOutput1(output1);
@@ -176,12 +175,12 @@ function App() {
     if (canvasRef.current) {
       const image = canvasRef.current.getCanvasData();
       if (image !== null) {
-        // Send classification request to worker 1
+        // send classification request to worker 1
         if (worker1.current) {
           setIsPredicting1(true);
           worker1.current.postMessage({ action: 'classify', image });
         }
-        // Send classification request to worker 2
+        // send classification request to worker 2
         if (worker2.current) {
           setIsPredicting2(true);
           worker2.current.postMessage({ action: 'classify', image });
@@ -191,7 +190,7 @@ function App() {
   }, []);
 
   const handleEndGame = (cancelled = false) => {
-    endGame(setGameState, addPrediction, handleClearCanvas, cancelled, setLeaderboardData, modelStats, selectedModelsRef.current);
+    endGame(setGameState, addPrediction, handleClearCanvas, cancelled, setLeaderboardData, modelStats, setModelStats, selectedModelsRef.current, LeaderboardData);
   };
 
   const handleClearCanvas = (resetTimeSpentDrawing = false) => {
@@ -202,25 +201,25 @@ function App() {
 
   const beginCountdown = () => {
     startCountdown(setCountdown, setGameState);
-    // Generate possible labels for the game
+    // generate possible labels for the game
     const possibleLabels = Object.values(constants.LABELS).filter(
       (x) => !constants.BANNED_LABELS.includes(x)
     );
-    // Shuffle the labels
+    // shuffle the labels
     shuffleArray(possibleLabels);
-    // Set the targets and target index
+    // set the targets and target index
     setTargets(possibleLabels);
     setTargetIndex(0);
   };
 
   const handleMainClick = () => {
     if (!ready) {
-      // If not ready, set game state to loading and load the workers
+      // if not ready, set game state to loading and load the workers
       setGameState('loading');
       worker1.current.postMessage({ action: 'load' });
       worker2.current.postMessage({ action: 'load' });
     } else {
-      // If ready, begin the countdown
+      // if ready, begin the countdown
       beginCountdown();
     }
   };
@@ -231,10 +230,10 @@ function App() {
 
   const handleGameOverClick = (playAgain) => {
     if (playAgain) {
-      // If playing again, begin the countdown
+      // if playing again, begin the countdown
       beginCountdown();
     } else {
-      // If not playing again, end the game
+      // if not playing again, end the game
       handleEndGame(true);
     }
   };
@@ -263,8 +262,8 @@ function App() {
   );
 
   useEffect(() => {
-    checkGameOver(setGameState, gameState, gameCurrentTime, gameStartTime, endGame, setLeaderboardData, modelStats, setModelStats, addPrediction, handleClearCanvas, false, selectedModelsRef.current);
-  }, [gameState, gameCurrentTime, gameStartTime, modelStats, selectedModelsRef]);
+    checkGameOver(setGameState, gameState, gameCurrentTime, gameStartTime, endGame, setLeaderboardData, modelStats, setModelStats, addPrediction, handleClearCanvas, false, selectedModelsRef.current, LeaderboardData);
+  }, [gameState, gameCurrentTime, gameStartTime, modelStats, selectedModelsRef, LeaderboardData]);
 
   useEffect(() => {
     checkWordGuessed(gameState, output1, output2, targets, targetIndex, goToNextWord, addPrediction, setTargetIndex, setOutput1, setOutput2, setSketchHasChanged, handleClearCanvas, setGameStartTime, modelStats, setModelStats);
@@ -285,7 +284,7 @@ function App() {
     }
   }, [gameState]);
 
-  // Determine which components should be visible based on game state
+  // determine which components should be visible based on game state
   const menuVisible = gameState === 'menu' || gameState === 'loading';
   const isPlaying = gameState === 'playing';
   const countdownVisible = gameState === 'countdown';
@@ -301,10 +300,10 @@ function App() {
     [7, 'CrossViT-18', 43.2, 82.29, '43.21M', '1000'],
   ];
 
-  // Function to get a specific column
+  // function to get a specific column
   const getColumn = (data, colIndex) => data.map(row => row[colIndex]);
 
-  // Extracting columns using the getColumn function
+  // extracting columns using the getColumn function
   const col1 = getColumn(LeaderboardData, 0);
   const col2 = getColumn(LeaderboardData, 1);
   const col3 = getColumn(LeaderboardData, 2);
@@ -312,8 +311,7 @@ function App() {
   const col5 = getColumn(LeaderboardData, 4);
   const col6 = getColumn(LeaderboardData, 5);
 
-
-  // New column names
+  // new column names
   const colNames = ['Rank', 'Model', 'ELO', 'Avg Time', 'Params'];
 
   const chartOptions = constants.chartOptionsArray.reduce((acc, chart) => {
@@ -323,7 +321,7 @@ function App() {
 
   return (
     <>
-      {/* The canvas */}
+      {/* the canvas */}
       <div className={`h-full w-full top-0 left-0 absolute ${isPlaying ? '' : 'pointer-events-none'}`}>
         <SketchCanvas
           onSketchChange={() => {
@@ -333,7 +331,7 @@ function App() {
         />
       </div>
 
-      {/* The main menu */}
+      {/* the main menu */}
       <AnimatePresence initial={false} mode='wait'>
         {menuVisible && (
           <Menu
@@ -344,17 +342,17 @@ function App() {
         )}
       </AnimatePresence>
 
-      {/* The countdown screen */}
+      {/* the countdown screen */}
       <AnimatePresence initial={false} mode='wait'>
         {countdownVisible && <Countdown countdown={countdown} />}
       </AnimatePresence>
 
-      {/* The game over screen */}
+      {/* the game over screen */}
       <AnimatePresence initial={false} mode='wait'>
         {gameOver && <GameOver predictions={predictions} onClick={handleGameOverClick} />}
       </AnimatePresence>
 
-      {/* The leaderboard */}
+      {/* the leaderboard */}
       <AnimatePresence initial={false} mode='wait'>
         {isLeaderboardVisible && (
           <Leaderboard
@@ -373,7 +371,7 @@ function App() {
           />
         )}
       </AnimatePresence>
-      {/* The game UI */}
+      {/* the game UI */}
       {isPlaying && gameCurrentTime !== null && targets && (
         <div className='absolute top-5 text-center'>
           <h2 className='text-4xl'>Draw &quot;{targets[targetIndex]}&quot;</h2>
@@ -382,10 +380,10 @@ function App() {
           </h3>
         </div>
       )}
-      {/* The game controls */}
+      {/* the game controls */}
       {isPlaying && (
       <>
-      {/* Displaying the prediction charts */}
+      {/* displaying the prediction charts */}
       <div className="absolute left-0 top-0">
       <PredictionChart predictions={graphOutput1} i={1} />
       </div>
@@ -393,7 +391,7 @@ function App() {
         <PredictionChart predictions={graphOutput2} i={2}/>
       </div>
       <div className="absolute bottom-5 text-center w-full">
-        {/* Displaying the predictions in text*/}
+        {/* displaying the predictions in text*/}
         <div className="flex justify-center gap-20 mb-5">
           <div className="flex flex-col items-center justify-center w-1/4">
             <h1 className="text-2xl font-bold text-center">{output1 && output1[0] && (<>{constants.MODELNAMEMAP[selectedModelsRef.current[0]]}<br />Prediction: {output1[0].label} ({(100 * output1[0].score).toFixed(1)}%)</>)}</h1>
@@ -403,7 +401,7 @@ function App() {
             <h1 className="text-2xl font-bold text-center">{output2 && output2[0] && (<>{constants.MODELNAMEMAP[selectedModelsRef.current[1]]}<br />Prediction: {output2[0].label} ({(100 * output2[0].score).toFixed(1)}%)</>)}</h1>
           </div>
         </div>
-        {/* Buttons to handle clear, skip, and exit*/}
+        {/* buttons to handle clear, skip, and exit*/}
         <div className="flex gap-4 justify-center">
           <button className="px-6 py-2 bg-blue-200 text-[#555555] text-xl rounded-lg hover:bg-blue-300" onClick={handleClearCanvas}>Clear</button>
           <button className="px-6 py-2 bg-green-200 text-[#555555] text-xl rounded-lg hover:bg-green-300" onClick={() => goToNextWord(addPrediction, setTargetIndex, setOutput1, setOutput2, setSketchHasChanged, handleClearCanvas, false, setGameStartTime)}>Skip</button>

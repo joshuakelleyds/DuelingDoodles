@@ -1,100 +1,107 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as d3 from 'd3';
 
+/**
+ * PredictionChart component that shows a bubble chart based on predictions.
+ * @param {Object[]} predictions - Array of prediction objects, each with a label and score.
+ * @param {number} i - Index to choose the color scheme.
+ * @returns {JSX.Element} - The SVG element with the chart.
+ */
 const PredictionChart = ({ predictions, i }) => {
-  const chartRef = useRef(null);
-  const [simulation, setSimulation] = useState(null);
+  const chartRef = useRef(null); // reference to the SVG element
+  const [simulation, setSimulation] = useState(null); // state to store the D3 simulation
 
   useEffect(() => {
-    if (!predictions || predictions.length === 0) return;
+    if (!predictions || predictions.length === 0) return; // do nothing if no predictions
 
     // set chart size based on window size
-    const width = window.innerWidth / 4; // set width to 1/4 of window width
-    const height = window.innerHeight; // set height to window height
-    const minDimension = Math.min(width, height); // find the smaller dimension (width or height)
+    const width = window.innerWidth / 4; // make the width a quarter of the window width
+    const height = window.innerHeight; // make the height equal to the window height
+    const minDimension = Math.min(width, height); // use the smaller dimension for sizing
 
-    const range = window.innerWidth <= 768 ? [3, 90] : [minDimension * 0.025, minDimension * 0.4]; // check for mobile devices
-    const strength = window.innerWidth <= 768 ? .0001 : .005; // check for mobile devices
+    const range = window.innerWidth <= 768 ? [3, 90] : [minDimension * 0.025, minDimension * 0.4]; // different sizes for mobile
+    const strength = window.innerWidth <= 768 ? .0001 : .005; // different strengths for mobile
 
-    // create svg element to contain the chart
-    const svg = d3.select(chartRef.current) // select the svg element using the ref
-      .attr('width', width) // set the width of the svg
-      .attr('height', height) // set the height of the svg
-      .style('background', 'white'); // set the background color of the svg
+    // create svg element
+    const svg = d3.select(chartRef.current) // select the svg element
+      .attr('width', width) // set its width
+      .attr('height', height) // set its height
+      .style('background', 'white'); // set background color
 
-    // create scales for circle size and color
-    const radiusScale = d3.scaleSqrt() // use square root scale for circle size
-      .domain([0, 1]) // set the input domain from 0 to 1
-      .range(range); // set the output range for circle sizes
+    // scales for circle size and color
+    const radiusScale = d3.scaleSqrt() // square root scale for circle sizes
+      .domain([0, 1]) // input values range from 0 to 1
+      .range(range); // output sizes range
 
-    const colorScale = i == 1 ? d3.scaleOrdinal(d3.schemePastel1) : d3.scaleOrdinal(d3.schemePastel2); // create an ordinal color scale with d3's built-in color scheme
+    const colorScale = i === 1 ? d3.scaleOrdinal(d3.schemePastel1) : d3.scaleOrdinal(d3.schemePastel2); // choose color scheme
 
-    // stop and remove previous simulation if it exists
+    // stop and clear previous simulation if it exists
     if (simulation) {
-      simulation.stop(); // stop the previous simulation
-      svg.selectAll('*').remove(); // remove all elements from the svg
+      simulation.stop(); // stop it
+      svg.selectAll('*').remove(); // clear svg contents
     }
 
-    // create new simulation with forces to position the circles
-    const newSimulation = d3.forceSimulation(predictions) // create a new force simulation with the predictions data
-      .force('x', d3.forceX(width / 2).strength(0.01)) // add an x-positioning force towards the center of the svg, with weak strength
-      .force('y', d3.forceY(height / 2).strength(strength)) // add a y-positioning force towards the center of the svg, with weak strength
-      .force('collide', d3.forceCollide().radius(d => radiusScale(d.score)).strength(.7)) // add a collision force to prevent circle overlap, with radius based on score
-      .force('center', d3.forceCenter(width / 2, height / 2))// add a centering force to keep the circles in the center of the svg
+    // create new simulation for positioning circles
+    const newSimulation = d3.forceSimulation(predictions) // start simulation with predictions data
+      .force('x', d3.forceX(width / 2).strength(0.01)) // force to center horizontally
+      .force('y', d3.forceY(height / 2).strength(strength)) // force to center vertically
+      .force('collide', d3.forceCollide().radius(d => radiusScale(d.score)).strength(.7)) // avoid overlap
+      .force('center', d3.forceCenter(width / 2, height / 2)) // center everything
       .on('tick', () => {
-        // update circle positions on each simulation tick
+        // update positions on each tick
         node.attr('transform', d => {
-          const radius = radiusScale(d.score); // get the radius of the circle based on its score
-          d.x = Math.max(radius, Math.min(width - radius, d.x)); // constrain the x position to keep the circle within the svg bounds
-          d.y = Math.max(radius, Math.min(height - radius, d.y)); // constrain the y position to keep the circle within the svg bounds
-          return `translate(${d.x}, ${d.y})`; // set the position of the circle group
+          const radius = radiusScale(d.score); // get circle radius
+          d.x = Math.max(radius, Math.min(width - radius, d.x)); // keep inside bounds
+          d.y = Math.max(radius, Math.min(height - radius, d.y)); // keep inside bounds
+          return `translate(${d.x}, ${d.y})`; // move circle
         });
       });
 
-    setSimulation(newSimulation); // store the new simulation in state
+    setSimulation(newSimulation); // save the new simulation
 
-    // create groups to hold each circle and text element
-    const node = svg.selectAll('g') // select all 'g' elements in the svg (there are none yet)
-      .data(predictions) // bind the predictions data to the selection
-      .enter() // for each data point that doesn't have a corresponding element, create a new one
-      .append('g') // append a new 'g' element for each data point
-      .attr('transform', `translate(${width / 2}, ${height / 2})`); // position the 'g' element at the center of the svg
+    // create groups for each circle and text
+    const node = svg.selectAll('g') // select all groups
+      .data(predictions) // bind data
+      .enter() // create new elements
+      .append('g') // append group elements
+      .attr('transform', `translate(${width / 2}, ${height / 2})`); // start in the center
 
-    // add circles to the groups
-    node.append('circle') // append a 'circle' element to each 'g'
-      .attr('r', d => radiusScale(d.score)) // set the radius of the circle based on the score, using the radius scale
-      .style('fill', (_, i) => colorScale(i)) // set the fill color of the circle using the color scale and index
-      .style('fill-opacity', 1) // set the fill opacity of the circle
-      .attr('stroke', '#69a2b2') // set the stroke color of the circle
-      .style('stroke-width', 2); // set the stroke width of the circle
+    // add circles to groups
+    node.append('circle') // append a circle to each group
+      .attr('r', d => radiusScale(d.score)) // set radius based on score
+      .style('fill', (_, i) => colorScale(i)) // set fill color
+      .style('fill-opacity', 1) // full opacity
+      .attr('stroke', '#69a2b2') // border color
+      .style('stroke-width', 2); // border width
 
     // add text labels to the first 10 circles
-    node.filter((d, i) => i < 10) // filter the nodes to only include the first 10
-      .append('text') // append a 'text' element to each filtered node
-      .text(d => d.label) // set the text content to the label of the data point
-      .style('text-anchor', 'middle') // center the text horizontally
-      .style('alignment-baseline', 'middle') // center the text vertically
+    node.filter((d, i) => i < 10) // only first 10
+      .append('text') // append text
+      .text(d => d.label) // set text content
+      .style('text-anchor', 'middle') // center text
+      .style('alignment-baseline', 'middle') // vertically align text
       .style('font-size', d => {
-        const radius = radiusScale(d.score); // get the radius of the circle
-        const textLength = d.label.length; // get the length of the label text
-        const fontSize = Math.min(radius, radius / (textLength / 3)); // calculate the font size based on the radius and text length
-        return `${fontSize}px`; // set the font size in pixels
+        const radius = radiusScale(d.score); // get radius
+        const textLength = d.label.length; // get text length
+        const fontSize = Math.min(radius, radius / (textLength / 3)); // calculate font size
+        return `${fontSize}px`; // set font size
       })
-      .style('fill', '#36454F'); // set the text color to a slightly darker shade of gray
+      .style('fill', '#36454F'); // text color
 
-    // cleanup function to stop simulation when component unmounts
+    // cleanup when component unmounts
     return () => {
-      newSimulation.stop(); // stop the simulation
-      svg.selectAll('*').remove(); // remove all elements from the svg
+      newSimulation.stop(); // stop simulation
+      svg.selectAll('*').remove(); // clear svg
     };
-  }, [predictions]); // re-run the effect whenever the predictions data changes
+  }, [predictions]); // re-run effect when predictions change
 
-    return React.createElement('svg', {
+  // render the svg element with a ref to access it in the effect
+  return React.createElement('svg', {
     ref: chartRef,
     className: 'object-none w-full h-full',
     width: window.innerWidth / 4,
     height: window.innerHeight,
-  }); // render the svg element with a ref to access it in the effect
+  });
 };
 
 export default PredictionChart;

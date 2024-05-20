@@ -6,29 +6,34 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader';
 import doodlebobModel from '../assets/new.glb';
 
-// define animation variants for drop-in effect
+/**
+ * Animation variants for the drop-in effect.
+ */
 const dropIn = {
   hidden: {
-    y: "-100vh",
+    y: '-100vh',
     transition: {
       delay: 0.1,
-      type: "spring",
+      type: 'spring',
       damping: 10,
       stiffness: 100,
     },
   },
   visible: {
-    y: "0",
+    y: '0',
     opacity: 1,
     transition: {
-      type: "spring",
+      type: 'spring',
       damping: 10,
       stiffness: 100,
     },
   },
 };
 
-// define 3d model component
+/**
+ * Model component that loads and renders a 3D model.
+ * @returns {JSX.Element} The 3D model component.
+ */
 const Model = () => {
   // create a memoized draco loader instance for decompressing the model
   const dracoLoader = useMemo(() => {
@@ -59,15 +64,23 @@ const Model = () => {
     ref: modelRef,
     object: gltf.scene,
     position: [0, 0, 0],
-    scale: [.55, .55, .55],
+    scale: [0.55, 0.55, 0.55],
   });
 };
 
-// define menu component
+/**
+ * Menu component that displays the game menu with a 3D model, title, and buttons.
+ * @param {Object} props - The component props.
+ * @param {Function} props.onClick - Callback function for the play button click event.
+ * @param {string} props.gameState - The current game state.
+ * @param {Function} props.onLeaderboardClick - Callback function for the leaderboard button click event.
+ * @returns {JSX.Element} The menu component.
+ */
 const Menu = ({ onClick, gameState, onLeaderboardClick }) => {
   // define button colors
-  const buttonColors = ["#a1d7c1", "#e8b5d6"];
+  const buttonColors = ['#fdcdac', '#e8b5d6'];
 
+  // handle WebGL context loss and restore
   useEffect(() => {
     const handleContextLoss = (event) => {
       event.preventDefault();
@@ -114,7 +127,7 @@ const Menu = ({ onClick, gameState, onLeaderboardClick }) => {
           React.createElement(Model, { key: 'model' }),
         ]),
       ),
-      // render title, subtitle, play button, and leaderboard button
+      // render title
       React.createElement(
         'h1',
         {
@@ -123,6 +136,7 @@ const Menu = ({ onClick, gameState, onLeaderboardClick }) => {
         },
         'Dueling Doodles'
       ),
+      // render subtitle
       React.createElement(
         'h2',
         {
@@ -131,6 +145,7 @@ const Menu = ({ onClick, gameState, onLeaderboardClick }) => {
         },
         'Benchmarking Lightweight Vision Models through your doodles'
       ),
+      // render play button
       React.createElement(
         'button',
         {
@@ -138,7 +153,7 @@ const Menu = ({ onClick, gameState, onLeaderboardClick }) => {
           disabled: gameState !== 'menu',
           type: 'button',
           style: { backgroundColor: buttonColors[0] },
-          className: `inline-flex items-center px-4 py-2 font-semibold leading-6 shadow rounded-md text-white hover:opacity-80 transition ease-in-out duration-150 ${
+          className: `inline-flex items-center px-4 py-2 font-semibold leading-6 shadow rounded-md text-[#555555] hover:opacity-80 transition ease-in-out duration-150 ${
             gameState === 'loading' ? 'cursor-not-allowed' : ''
           }`,
           key: 'playButton',
@@ -176,13 +191,14 @@ const Menu = ({ onClick, gameState, onLeaderboardClick }) => {
             ]
           : 'Play Game',
       ),
+      // render leaderboard button
       React.createElement(
         'button',
         {
           onClick: onLeaderboardClick,
           type: 'button',
           style: { backgroundColor: buttonColors[1] },
-          className: 'inline-flex items-center px-4 py-2 font-semibold leading-6 shadow rounded-md text-white hover:opacity-80 transition ease-in-out duration-150 mt-4',
+          className: 'inline-flex items-center px-5 py-3 font-semibold leading-6 shadow rounded-md text-[#555555] hover:opacity-80 transition ease-in-out duration-150 mt-4',
           key: 'leaderboardButton',
         },
         'Leaderboard',
