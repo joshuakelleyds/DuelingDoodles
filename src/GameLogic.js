@@ -285,26 +285,35 @@ export const updateTableData = (modelStats, selectedModels, LeaderboardData) => 
   const model1 = selectedModels[0];
   const model2 = selectedModels[1];
 
-  // calculate ELO ratings based on correct guesses
-  const calculateElo = (correctGuesses) => {
-    // ELO calculation logic, adjust as necessary
+  // calculate ELO ratings based on match outcome and correct guesses
+  const calculateElo = (currentElo, opponentElo, score) => {
     const K = 32; // K-factor
-    const initialElo = 1000; // initial ELO rating
-
-    const elo = initialElo + K * correctGuesses;
-    return elo;
+    const expectedScore = 1 / (1 + Math.pow(10, (opponentElo - currentElo) / 400));
+    return currentElo + K * (score - expectedScore);
   };
+
+  // get initial ELOs from leaderboard
+  const model1Elo = LeaderboardData.find(row => row[1] === constants.MODELNAMEMAP[model1])[2];
+  const model2Elo = LeaderboardData.find(row => row[1] === constants.MODELNAMEMAP[model2])[2];
+
+  // calculate match outcome: 1 if model1 wins, 0 if model2 wins, 0.5 for a draw
+  const model1Score = modelStats.correctGuessesModel1 > modelStats.correctGuessesModel2 ? 1 : (modelStats.correctGuessesModel1 < modelStats.correctGuessesModel2 ? 0 : 0.5);
+  const model2Score = 1 - model1Score;
+
+  // update ELO ratings
+  const newModel1Elo = calculateElo(model1Elo, model2Elo, model1Score);
+  const newModel2Elo = calculateElo(model2Elo, model1Elo, model2Score);
 
   // populate model stats map
   modelStatsMap[model1] = {
     correctGuesses: modelStats.correctGuessesModel1,
     lastPredictionTime: modelStats.lastPredictionTimeModel1,
-    elo: calculateElo(modelStats.correctGuessesModel1)
+    elo: newModel1Elo
   };
   modelStatsMap[model2] = {
     correctGuesses: modelStats.correctGuessesModel2,
     lastPredictionTime: modelStats.lastPredictionTimeModel2,
-    elo: calculateElo(modelStats.correctGuessesModel2)
+    elo: newModel2Elo
   };
 
   // calculate average time between predictions

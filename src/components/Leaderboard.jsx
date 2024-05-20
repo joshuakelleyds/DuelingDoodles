@@ -24,18 +24,18 @@ import { mobileTabletCheck } from '../utils';
  * @returns {JSX.Element} the rendered leaderboard component
  */
 const Leaderboard = ({
-  LeaderboardData, // initial table data
-  colNames = [], // column names
-  tableStyleOptions = {}, // table style options
-  barData = [], // bar chart data
-  barHData = [], // horizontal bar chart data
-  scatterData = {}, // scatter plot data
-  pieData = [], // pie chart data
-  donutData = [], // donut chart data
-  chartOptions = {}, // chart options
-  numGraphs, // number of graphs
-  graphTypes = [], // graph types
-  onClose, // callback function for closing the leaderboard
+  LeaderboardData, 
+  colNames = [], 
+  tableStyleOptions = {}, 
+  barData = [], 
+  barHData = [], 
+  scatterData = {}, 
+  pieData = [], 
+  donutData = [], 
+  chartOptions = {}, 
+  numGraphs,
+  graphTypes = [],
+  onClose, 
 }) => {
   // state to store the table data
   const [tableData, setTableData] = useState(LeaderboardData || []);
@@ -193,8 +193,9 @@ const Leaderboard = ({
     });
   }, [tableData, colNames, tableStyleOptions, calculateColumnWidths, resizeCanvas, tableHeight, isMobile]);
 
+  // draw the table when the component mounts or the table data changes
   useEffect(() => {
-    drawTable(); // draw the table when the component mounts or the table data changes
+    drawTable();
   }, [drawTable]);
 
   /**
@@ -224,6 +225,7 @@ const Leaderboard = ({
    * @returns {JSX.Element|null} the rendered graph component or null on error
    */
   const renderGraph = useCallback((graphType, data) => {
+    console.log("pog");
     if (!data) return null; // return null if data is not available
 
     try {
@@ -299,6 +301,7 @@ const Leaderboard = ({
     }
   };
 
+  // create and return the leaderboard component
   return React.createElement(motion.div, {
     initial: { opacity: 0, scale: 0.8 }, // initial animation state
     animate: { opacity: 1, scale: 1 }, // animate to this state
@@ -361,8 +364,8 @@ const Leaderboard = ({
     className: "inline-flex items-center px-4 py-2 font-bold leading-6 shadow rounded-full text-white bg-gray-400 hover:bg-gray-300 transition ease-in-out duration-150",
     style: {
       position: 'absolute',
-      bottom: '5px',
-      right: '5px',
+      bottom: '10px',
+      right: '10x',
       fontSize: 'min(2vw, 2vh)',
     }
   }, "Close")));

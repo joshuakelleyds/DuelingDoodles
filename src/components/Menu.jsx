@@ -111,7 +111,7 @@ const Menu = ({ onClick, gameState, onLeaderboardClick }) => {
       animate: 'visible',
       variants: dropIn,
       exit: 'hidden',
-      className: 'absolute w-full h-full flex justify-center items-center flex-col px-8 text-center',
+      className: 'absolute w-full h-full flex justify-center items-center flex-col px-8 text-center pb-8', // Added padding-bottom
     },
     [
       // render the model using suspense for async loading
@@ -131,7 +131,7 @@ const Menu = ({ onClick, gameState, onLeaderboardClick }) => {
       React.createElement(
         'h1',
         {
-          className: 'sm:text-8xl text-7xl mb-4 font-extrabold tracking-tight text-slate-900 text-center',
+          className: 'sm:text-7xl text-7xl mb-4 font-extrabold tracking-tight text-slate-900 text-center',
           key: 'title',
         },
         'Dueling Doodles'
@@ -140,7 +140,7 @@ const Menu = ({ onClick, gameState, onLeaderboardClick }) => {
       React.createElement(
         'h2',
         {
-          className: 'sm:text-3xl text-xl mb-3 font-semibold text-slate-900',
+          className: 'sm:text-2xl text-2xl mb-10 font-semibold text-slate-900', // Reduced margin-bottom to mb-2
           key: 'subtitle',
         },
         'Benchmarking Lightweight Vision Models through your doodles'
@@ -153,8 +153,8 @@ const Menu = ({ onClick, gameState, onLeaderboardClick }) => {
           disabled: gameState !== 'menu',
           type: 'button',
           style: { backgroundColor: buttonColors[0] },
-          className: `inline-flex items-center px-4 py-2 font-semibold leading-6 shadow rounded-md text-[#555555] hover:opacity-80 transition ease-in-out duration-150 ${
-            gameState === 'loading' ? 'cursor-not-allowed' : ''
+          className: `sm:text-md inline-flex items-center leading-5 shadow rounded-md text-[#555555] hover:opacity-80 transition ease-in-out duration-150 sm:px-3 sm:py-2 md:px-3 md:py-2 lg:px-6 lg:py-4${
+            gameState === 'loading' ? ' cursor-not-allowed' : ''
           }`,
           key: 'playButton',
         },
@@ -198,7 +198,7 @@ const Menu = ({ onClick, gameState, onLeaderboardClick }) => {
           onClick: onLeaderboardClick,
           type: 'button',
           style: { backgroundColor: buttonColors[1] },
-          className: 'inline-flex items-center px-5 py-3 font-semibold leading-6 shadow rounded-md text-[#555555] hover:opacity-80 transition ease-in-out duration-150 mt-4',
+          className: 'sm:text-md inline-flex items-center leading-6 shadow rounded-md text-[#555555] hover:opacity-80 transition ease-in-out duration-150 sm:px-2 sm:py-1 md:px-3 md:py-2 lg:px-6 lg:py-4 mt-4', // Changed margin-top to mt-4
           key: 'leaderboardButton',
         },
         'Leaderboard',
@@ -206,6 +206,4 @@ const Menu = ({ onClick, gameState, onLeaderboardClick }) => {
     ],
   );
 };
-
-// export menu component
 export default Menu;

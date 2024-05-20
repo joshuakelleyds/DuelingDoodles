@@ -36,7 +36,7 @@ function App() {
   const initialLeaderboardData = constants.MODELPATHS.map((model, index) => [
     index + 1, // rank
     constants.MODELNAMEMAP[model], // model
-    0, // elo
+    1000, // elo
     0, // avg time
     constants.MODELPARAMS[model], // params
     0, // correct guesses

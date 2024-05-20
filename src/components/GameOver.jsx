@@ -105,5 +105,4 @@ const GameOver = ({ predictions, onClick }) => {
   );
 };
 
-// export the GameOver component as default export
 export default GameOver;
