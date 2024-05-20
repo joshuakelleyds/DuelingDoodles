@@ -421,7 +421,7 @@ export default {
     headerColors: ['#fbb4ae', '#b3cde3', '#ccebc5', '#decbe4', '#fed9a6', '#ffffcc', '#e5d8bd', '#fddaec', '#f2f2f2'],
     cellColor: '#ffffff',
   },
-  colNames: ['Rank', 'Model', 'ELO', 'Avg Time', 'Params'],
+  colNames: ['Rank', 'Model', 'ELO', 'Avg Time', 'Params', 'Correct Guesses'],
   chartOptionsArray: [
     {
       type: 'bar',
@@ -432,6 +432,8 @@ export default {
         stroke: 'grey',
         strokeWidth: 2,
         title: 'Rank',
+        color: "#cbd5e8",
+        titleFontSize: '1.1rem',
       },
     },
     {
@@ -444,39 +446,32 @@ export default {
         strokeWidth: 2,
         title: 'ELO',
         color: "#ccebc5",
-      },
-    },
-    {
-      type: 'line',
-      options: {
-        roughness: 1,
-        fillStyle: 'hachure',
-        fillWeight: 4,
-        stroke: 'blue',
-        strokeWidth: 1.5,
-        title: 'Line Chart',
+        titleFontSize: '1.1rem',
       },
     },
     {
       type: 'scatter',
       options: {
-        roughness: 2.5,
-        fillStyle: 'cross-hatch',
-        fillWeight: 1.5,
-        stroke: 'red',
+        roughness: .3,
+        fillStyle: 'hachure',
+        fillWeight: 3,
+        stroke: 'grey',
         strokeWidth: 1,
         title: 'Scatter Chart',
+        titleFontSize: '1.3rem',
       },
     },
     {
       type: "pie",
       options: {
-        roughness: 2,
+        roughness: 3,
         fillStyle: 'hachure',
-        fillWeight: 2,
+        fillWeight: 10,
         stroke: 'grey',
         strokeWidth: 1,
-        title: 'Model Distribution',
+        title: 'Model',
+        colors: ['#e3968e', '#91a6bc', '#a8c6a0', '#b8a3bb', '#e6b87d', '#e6e6a3', '#b8a690', '#e2b0c2', '#c9c9c9'],
+        titleFontSize: '1.3rem',
       },
     },
     {
@@ -487,19 +482,9 @@ export default {
         fillWeight: 2,
         stroke: 'grey',
         strokeWidth: 1,
-        title: 'Donut Chart',
+        title: 'Boom',
+        titleFontSize: '1.3rem',
       },
     },
-    {
-      type: "stackedBar",
-      options: {
-        roughness: 2,
-        fillStyle: 'hachure',
-        fillWeight: 2,
-        stroke: 'grey',
-        strokeWidth: 1,
-        title: 'Stacked Bar Chart',
-      },
-    }
   ],
 };
