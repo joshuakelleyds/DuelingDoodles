@@ -1,4 +1,3 @@
-// import necessary dependencies
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Typography, Box, Paper } from '@mui/material';
@@ -38,7 +37,7 @@ const Leaderboard = ({
   onClose, 
 }) => {
   // state to store the table data
-  const [tableData, setTableData] = useState(LeaderboardData || []);
+  const [tableData, setTableData] = useState(LeaderboardData ? LeaderboardData.map(row => row.slice(1)) : []);
   // ref to store the canvas element for the table
   const tableCanvasRef = useRef(null);
   // check if the device is mobile or tablet
@@ -101,7 +100,7 @@ const Leaderboard = ({
       });
     });
 
-    colNames.forEach((header, columnIndex) => {
+    colNames.slice(1).forEach((header, columnIndex) => {
       const headerWidth = ctx.measureText(header).width * 1.3; // measure the width of the header text and add padding
       maxWidths[columnIndex] = Math.max(maxWidths[columnIndex], headerWidth) * 2.3; // update the maximum width for the column if necessary
     });
@@ -131,13 +130,13 @@ const Leaderboard = ({
 
     const headerFontSize = isMobile
       ? isLandscape
-        ? '2vw'
-        : '5vw'
+        ? '3.5vw'
+        : '8vw'
       : `${Math.min(Math.floor(cellHeight * 0.08), Math.floor(Math.min(...columnWidths) * 0.08))}vmin`; // calculate the font size for headers
     const cellFontSize = isMobile
       ? isLandscape
-        ? '1.5vw'
-        : '4vw'
+        ? '3.5vw'
+        : '8vw'
       : `${Math.min(Math.floor(cellHeight * 0.07), Math.floor(Math.min(...columnWidths) * 0.07))}vmin`; // calculate the font size for cells
 
     const headerColors = tableStyleOptions.headerColors || [
@@ -148,7 +147,7 @@ const Leaderboard = ({
 
     // draw the header cells
     let currentX = 0;
-    colNames.forEach((header, columnIndex) => {
+    colNames.slice(1).forEach((header, columnIndex) => {
       const cellWidth = columnWidths[columnIndex];
       const color = headerColors[columnIndex % headerColors.length];
       roughCanvas.rectangle(currentX, 0, cellWidth, cellHeight, {
@@ -225,7 +224,6 @@ const Leaderboard = ({
    * @returns {JSX.Element|null} the rendered graph component or null on error
    */
   const renderGraph = useCallback((graphType, data) => {
-    console.log("pog");
     if (!data) return null; // return null if data is not available
 
     try {
@@ -303,10 +301,10 @@ const Leaderboard = ({
 
   // create and return the leaderboard component
   return React.createElement(motion.div, {
-    initial: { opacity: 0, scale: 0.8 }, // initial animation state
-    animate: { opacity: 1, scale: 1 }, // animate to this state
-    exit: { opacity: 0, scale: 0.8 }, // exit animation state
-    transition: { duration: 0.3 }, // animation duration
+    initial: { opacity: 0, scale: 0.8 }, 
+    animate: { opacity: 1, scale: 1 }, 
+    exit: { opacity: 0, scale: 0.8 }, 
+    transition: { duration: 0.3 },
     className: "fixed top-0 left-0 w-full h-full flex justify-center items-center bg-white z-50"
   }, React.createElement(Paper, {
     elevation: 3,
@@ -369,6 +367,6 @@ const Leaderboard = ({
       fontSize: 'min(2vw, 2vh)',
     }
   }, "Close")));
-};
-
-export default Leaderboard;
+ };
+ 
+ export default Leaderboard;

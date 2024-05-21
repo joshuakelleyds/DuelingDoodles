@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import * as d3 from 'd3';
 
 /**
- * PredictionChart component that shows a bubble chart based on predictions.
+ * PredictionChart component that shows a bubble chart physics simulation every x predictions
  * @param {Object[]} predictions - Array of prediction objects, each with a label and score.
  * @param {number} i - Index to choose the color scheme.
  * @returns {JSX.Element} - The SVG element with the chart.

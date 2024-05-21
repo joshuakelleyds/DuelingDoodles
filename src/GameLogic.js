@@ -1,4 +1,5 @@
 import constants from './constants';
+import { updateLeaderboardData } from './dbLogic';
 
 /**
  * Formats time in seconds to mm:ss format.
@@ -113,11 +114,19 @@ export const startCountdown = (setCountdown, setGameState) => {
  * @param {Function} setGameStartTime - Function to set the game start time.
  * @param {Function} setPredictions - Function to set the predictions state.
  * @param {Function} setGameState - Function to set the game state.
+ * @param {Function} setModelStats - Function to set the model statistics.
  */
-export const startGame = (setGameStartTime, setPredictions, setGameState) => {
+export const startGame = (setGameStartTime, setPredictions, setGameState, setModelStats) => {
   setGameStartTime(performance.now());
   setPredictions([]);
   setGameState('playing');
+
+  // Reset lastPredictionTimeModel1 and lastPredictionTimeModel2
+  setModelStats((prevStats) => ({
+    ...prevStats,
+    lastPredictionTimeModel1: performance.now(),
+    lastPredictionTimeModel2: performance.now(),
+  }));
 };
 
 /**
@@ -132,20 +141,48 @@ export const startGame = (setGameStartTime, setPredictions, setGameState) => {
  * @param {Array} selectedModels - Array of selected model names.
  * @param {Array} LeaderboardData - Array of leaderboard data.
  */
-export const endGame = (setGameState, addPrediction, handleClearCanvas, cancelled, setLeaderboardData, modelStats, setModelStats, selectedModels, LeaderboardData) => {
+export const endGame = async (setGameState, addPrediction, handleClearCanvas, cancelled, setLeaderboardData, modelStats, setModelStats, selectedModels, LeaderboardData) => {
   if (!cancelled) {
     addPrediction(false);
   }
   handleClearCanvas(true);
   setGameState(cancelled ? 'menu' : 'end');
-  
-  // make sure modelStats is defined and has the correct structure
-  if (modelStats && modelStats.correctGuessesModel1 !== undefined && modelStats.correctGuessesModel2 !== undefined && LeaderboardData) {
-    // calculate and update leaderboard data
-    const updatedLeaderboardData = updateTableData(modelStats, selectedModels, LeaderboardData);
+
+  if (modelStats && LeaderboardData) {
+
+    const endTime = performance.now();
+    const avgTimeModel1 = modelStats.correctGuessesModel1 > 0 ? (endTime - modelStats.lastPredictionTimeModel1) / modelStats.correctGuessesModel1 / 1000 : 0;
+    const avgTimeModel2 = modelStats.correctGuessesModel2 > 0 ? (endTime - modelStats.lastPredictionTimeModel2) / modelStats.correctGuessesModel2 / 1000 : 0;
+
+    let updatedLeaderboardData = updateTableData(
+      {
+        ...modelStats,
+        avgTimeModel1,
+        avgTimeModel2,
+      },
+      selectedModels,
+      LeaderboardData
+    );
+
+    // Sort updated leaderboard data by the highest ELO (assuming ELO is in the 4th column/index 3)
+    updatedLeaderboardData = updatedLeaderboardData.sort((a, b) => b[3] - a[3]);
     setLeaderboardData(updatedLeaderboardData);
+
+    try {
+      await updateLeaderboardData(updatedLeaderboardData);
+    } catch (error) {
+      console.error('Error updating database:', error);
+    }
+
+    setModelStats((prevStats) => ({
+      ...prevStats,
+      correctGuessesModel1: 0,
+      correctGuessesModel2: 0,
+      lastPredictionTimeModel1: endTime,
+      lastPredictionTimeModel2: endTime,
+    }));
   } else {
-    console.error('modelStats is undefined or has an incorrect structure, or LeaderboardData is undefined');
+    console.error('modelStats or LeaderboardData is undefined or has an incorrect structure');
   }
 };
 
@@ -162,16 +199,10 @@ export const endGame = (setGameState, addPrediction, handleClearCanvas, cancelle
  */
 export const goToNextWord = (addPrediction, setTargetIndex, setOutput1, setOutput2, setSketchHasChanged, handleClearCanvas, isCorrect, setGameStartTime) => {
   if (!isCorrect) {
-    setGameStartTime((prev) => {
-      const newStartTime = prev - constants.SKIP_PENALTY;
-      return newStartTime;
-    });
+    setGameStartTime((prev) => prev - constants.SKIP_PENALTY);
   }
   addPrediction(isCorrect);
-  setTargetIndex((prev) => {
-    const newIndex = prev + 1;
-    return newIndex;
-  });
+  setTargetIndex((prev) => prev + 1);
   setOutput1(null);
   setOutput2(null);
   setSketchHasChanged(false);
@@ -225,21 +256,37 @@ export const checkGameOver = (setGameState, gameState, gameCurrentTime, gameStar
  */
 export const checkWordGuessed = (gameState, output1, output2, targets, targetIndex, goToNextWord, addPrediction, setTargetIndex, setOutput1, setOutput2, setSketchHasChanged, handleClearCanvas, setGameStartTime, modelStats, setModelStats) => {
   if (gameState === 'playing' && output1 !== null && output2 !== null && targets !== null) {
-    const target = targets[targetIndex]; // get the current target word
-    const predictedByModel1 = target === output1[0].label; // check if model 1 predicted correctly
-    const predictedByModel2 = target === output2[0].label; // check if model 2 predicted correctly
+    const target = targets[targetIndex];
+    const predictedByModel1 = target === output1[0].label;
+    const predictedByModel2 = target === output2[0].label;
 
-    if (predictedByModel1 || predictedByModel2) { // if either model predicted correctly
-      // update model stats
-      setModelStats((prevStats) => ({
-        ...prevStats,
-        correctGuessesModel1: predictedByModel1 ? prevStats.correctGuessesModel1 + 1 : prevStats.correctGuessesModel1,
-        correctGuessesModel2: predictedByModel2 ? prevStats.correctGuessesModel2 + 1 : prevStats.correctGuessesModel2,
-        lastPredictionTimeModel1: predictedByModel1 ? new Date() : prevStats.lastPredictionTimeModel1,
-        lastPredictionTimeModel2: predictedByModel2 ? new Date() : prevStats.lastPredictionTimeModel2,
-      }));
+    if (predictedByModel1 || predictedByModel2) {
+      setModelStats((prevStats) => {
+        const currentTime = performance.now();
+        let avgPredictionTimeModel1 = prevStats.avgPredictionTimeModel1;
+        let avgPredictionTimeModel2 = prevStats.avgPredictionTimeModel2;
 
-      // proceed to the next word
+        if (predictedByModel1) {
+          const timeDiff = (currentTime - prevStats.lastPredictionTimeModel1) / 1000;
+          avgPredictionTimeModel1 = (prevStats.avgPredictionTimeModel1 * prevStats.correctGuessesModel1 + timeDiff) / (prevStats.correctGuessesModel1 + 1);
+        }
+
+        if (predictedByModel2) {
+          const timeDiff = (currentTime - prevStats.lastPredictionTimeModel2) / 1000;
+          avgPredictionTimeModel2 = (prevStats.avgPredictionTimeModel2 * prevStats.correctGuessesModel2 + timeDiff) / (prevStats.correctGuessesModel2 + 1);
+        }
+
+        return {
+          ...prevStats,
+          correctGuessesModel1: predictedByModel1 ? prevStats.correctGuessesModel1 + 1 : prevStats.correctGuessesModel1,
+          correctGuessesModel2: predictedByModel2 ? prevStats.correctGuessesModel2 + 1 : prevStats.correctGuessesModel2,
+          lastPredictionTimeModel1: predictedByModel1 ? currentTime : currentTime,
+          lastPredictionTimeModel2: predictedByModel2 ? currentTime : currentTime,
+          avgPredictionTimeModel1,
+          avgPredictionTimeModel2,
+        };
+      });
+
       goToNextWord(addPrediction, setTargetIndex, setOutput1, setOutput2, setSketchHasChanged, handleClearCanvas, true, setGameStartTime);
     }
   }
@@ -273,75 +320,85 @@ export const gameLoop = (gameState, isPredicting1, isPredicting2, sketchHasChang
 };
 
 /**
- * Updates the leaderboard data with the new stats for the selected models.
+ * Updates the leaderboard data with new model statistics.
  * @param {Object} modelStats - Statistics of the models.
  * @param {Array} selectedModels - Array of selected model names.
  * @param {Array} LeaderboardData - Array of leaderboard data.
  * @returns {Array} - Updated leaderboard data.
  */
 export const updateTableData = (modelStats, selectedModels, LeaderboardData) => {
-  const modelStatsMap = {}; // map to store model stats
-
+  const modelStatsMap = {};
   const model1 = selectedModels[0];
   const model2 = selectedModels[1];
 
-  // calculate ELO ratings based on match outcome and correct guesses
   const calculateElo = (currentElo, opponentElo, score) => {
-    const K = 32; // K-factor
+    const K = 32;
     const expectedScore = 1 / (1 + Math.pow(10, (opponentElo - currentElo) / 400));
-    return currentElo + K * (score - expectedScore);
+    return Math.floor(currentElo + K * (score - expectedScore));
   };
 
-  // get initial ELOs from leaderboard
-  const model1Elo = LeaderboardData.find(row => row[1] === constants.MODELNAMEMAP[model1])[2];
-  const model2Elo = LeaderboardData.find(row => row[1] === constants.MODELNAMEMAP[model2])[2];
+  const model1Elo = LeaderboardData.find(row => row[2] === constants.MODELNAMEMAP[model1])[3];
+  const model2Elo = LeaderboardData.find(row => row[2] === constants.MODELNAMEMAP[model2])[3];
 
-  // calculate match outcome: 1 if model1 wins, 0 if model2 wins, 0.5 for a draw
   const model1Score = modelStats.correctGuessesModel1 > modelStats.correctGuessesModel2 ? 1 : (modelStats.correctGuessesModel1 < modelStats.correctGuessesModel2 ? 0 : 0.5);
   const model2Score = 1 - model1Score;
 
-  // update ELO ratings
   const newModel1Elo = calculateElo(model1Elo, model2Elo, model1Score);
   const newModel2Elo = calculateElo(model2Elo, model1Elo, model2Score);
 
-  // populate model stats map
   modelStatsMap[model1] = {
     correctGuesses: modelStats.correctGuessesModel1,
+    avgTime: modelStats.avgPredictionTimeModel1,
     lastPredictionTime: modelStats.lastPredictionTimeModel1,
     elo: newModel1Elo
   };
   modelStatsMap[model2] = {
     correctGuesses: modelStats.correctGuessesModel2,
+    avgTime: modelStats.avgPredictionTimeModel2,
     lastPredictionTime: modelStats.lastPredictionTimeModel2,
     elo: newModel2Elo
   };
 
-  // calculate average time between predictions
-  const calculateAvgTime = (lastPredictionTime, correctGuesses) => {
-    const totalTime = lastPredictionTime ? (Date.now() - new Date(lastPredictionTime)) / 1000 : 0;
-    return (totalTime / correctGuesses).toFixed(2);
+  const calculateAvgTime = (prevAvgTime, prevCorrectGuesses, newAvgTime, newCorrectGuesses) => {
+    const totalPrevTime = prevAvgTime * prevCorrectGuesses;
+    const totalNewTime = newAvgTime * newCorrectGuesses;
+    const totalCorrectGuesses = prevCorrectGuesses + newCorrectGuesses;
+    return totalCorrectGuesses ? ((totalPrevTime + totalNewTime) / totalCorrectGuesses).toFixed(2) : prevAvgTime.toFixed(2);
   };
 
-  // update the LeaderboardData array with the new stats for the selected models
   const updatedLeaderboardData = LeaderboardData.map((row) => {
-    const [rank, model, elo, avgTime, params, correctGuesses] = row;
+    const [id, rank, model, elo, avgTime, params, correctGuesses] = row;
     if (model === constants.MODELNAMEMAP[model1]) {
+      const newAvgTime = calculateAvgTime(
+        parseFloat(avgTime),
+        correctGuesses,
+        modelStatsMap[model1].avgTime,
+        modelStatsMap[model1].correctGuesses
+      );
       return [
+        id,
         rank,
         model,
         modelStatsMap[model1].elo,
-        calculateAvgTime(modelStatsMap[model1].lastPredictionTime, modelStatsMap[model1].correctGuesses),
+        newAvgTime,
         params,
-        modelStatsMap[model1].correctGuesses
+        correctGuesses + modelStatsMap[model1].correctGuesses
       ];
     } else if (model === constants.MODELNAMEMAP[model2]) {
+      const newAvgTime = calculateAvgTime(
+        parseFloat(avgTime),
+        correctGuesses,
+        modelStatsMap[model2].avgTime,
+        modelStatsMap[model2].correctGuesses
+      );
       return [
+        id,
         rank,
         model,
         modelStatsMap[model2].elo,
-        calculateAvgTime(modelStatsMap[model2].lastPredictionTime, modelStatsMap[model2].correctGuesses),
+        newAvgTime,
         params,
-        modelStatsMap[model2].correctGuesses
+        correctGuesses + modelStatsMap[model2].correctGuesses
       ];
     } else {
       return row;

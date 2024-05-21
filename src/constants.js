@@ -417,7 +417,7 @@ export default {
       cellColor: '#f7f7f7',
     },
   ],
-  colNames: ['Rank', 'Model', 'ELO', 'Avg Time', 'Params', 'Correct Guesses'],
+  colNames: ['Id', 'Rank', 'Model', 'ELO', 'Avg Time', 'Params', 'Correct Guesses'],
   chartOptionsArray: [
     {
       type: 'bar',
@@ -427,9 +427,9 @@ export default {
         fillWeight: 3,
         stroke: 'grey',
         strokeWidth: 2,
-        title: 'Rank',
+        title: 'Correct Guesses',
         color: "#cbd5e8",
-        titleFontSize: '1.1rem',
+        titleFontSize: '1.6rem',
       },
     },
     {
@@ -442,19 +442,22 @@ export default {
         strokeWidth: 2,
         title: 'ELO',
         color: "#ccebc5",
-        titleFontSize: '1.1rem',
+        titleFontSize: '1.6rem',
       },
     },
     {
       type: 'scatter',
       options: {
-        roughness: .3,
         fillStyle: 'hachure',
-        fillWeight: 3,
         stroke: 'grey',
+        roughness: 1,
         strokeWidth: 1,
-        title: 'Scatter Chart',
-        titleFontSize: '1.3rem',
+        title: 'Avg Time vs Params',
+        titleFontSize: '1.6rem',
+        fillWeight: 3,
+        colors: ['#e3968e', '#91a6bc', '#a8c6a0', '#b8a3bb', '#e6b87d', '#e6e6a3', '#b8a690', '#e2b0c2', '#c9c9c9'],
+        xLabel: 'Params (in Millions)',
+        yLabel: 'Avg Time',
       },
     },
     {

@@ -1,4 +1,3 @@
-// import necessary dependencies
 import React from 'react';
 import { motion } from 'framer-motion';
 
@@ -54,53 +53,63 @@ const GameOver = ({ predictions, onClick }) => {
       initial: 'hidden',
       animate: 'visible',
       variants: dropIn,
-      exit: "hidden",
-      className: 'absolute w-full h-full flex justify-center items-center flex-col px-8 text-center'
+      exit: 'hidden',
+      className: 'absolute w-full h-full flex justify-center items-center flex-col px-8 text-center',
     },
-    // game over title
-    React.createElement('h1', {
-      className: 'sm:text-7xl text-6xl mb-3 font-bold tracking-tight text-slate-900 text-center'
-    }, 'Game Over!'),
-    // display score
-    React.createElement('h2', {
-      className: 'mb-4 sm:text-2xl text-xl font-semibold text-slate-900'
-    }, 'Score: ', predictions.filter(p => p.correct).length, ' / ', predictions.length),
-    // container for predictions
-    React.createElement('div', {
-      className: 'max-w-full overflow-x-auto flex gap-4 px-8 p-4 rounded-lg shadow-[0_5px_25px_-5px_rgb(0,0,0,0.1),_0_8px_10px_-6px_rgb(0,0,0,0.1);]'
-    },
-    // map through predictions and display each
-    predictions.map((p, i) =>
+      // game over title
+      React.createElement('h1', {
+        className: 'sm:text-7xl text-6xl mb-3 font-bold tracking-tight text-slate-900 text-center',
+      }, 'Game Over!'),
+      // display score
+      React.createElement('h2', {
+        className: 'mb-4 sm:text-2xl text-xl font-semibold text-slate-900',
+      }, 'Score: ', predictions.filter(p => p.correct).length, ' / ', predictions.length),
+      // container for predictions
       React.createElement('div', {
-        key: i,
-        className: 'flex justify-center items-center w-full flex-col'
+        className: 'max-w-full overflow-x-auto flex gap-4 px-8 p-4 rounded-lg shadow-[0_5px_25px_-5px_rgb(0,0,0,0.1),_0_8px_10px_-6px_rgb(0,0,0,0.1);]',
       },
-      React.createElement('img', {
-        className: 'max-h-[12rem] min-w-[12rem]',
-        src: p.image ? createImageFromImageData(p.image) : ''
-      }),
-      React.createElement('p', {
-        className: 'text-slate-900 text-lg font-semibold mt-2'
-      }, p.target, ' ', p.correct ? '✅' : '❌'))
-    )),
-    // buttons for play again and main menu
-    React.createElement('div', {
-      className: 'flex mt-6 gap-4'
-    },
-    // play again button
-    React.createElement('button', {
-      onClick: () => onClick(true),
-      type: "button",
-      className: "inline-flex items-center px-4 py-2 font-semibold leading-6 shadow rounded-md text-[#555555]",
-      style: { backgroundColor: "#ff9980" } // set button color to slightly darker pastel orange
-    }, 'Play Again'),
-    // main menu button
-    React.createElement('button', {
-      onClick: () => onClick(false),
-      type: "button",
-      className: "inline-flex items-center px-4 py-2 font-semibold leading-6 shadow rounded-md text-[#555555]",
-      style: { backgroundColor: "#fffb91" } // set button color to slightly darker pastel yellow
-    }, 'Main Menu'))
+        // map through predictions and display each
+        predictions.map((p, i) =>
+          React.createElement('div', {
+            key: i,
+            className: 'flex justify-center items-center w-full flex-col',
+          },
+            React.createElement('img', {
+              className: 'max-h-[12rem] min-w-[12rem]',
+              src: p.image ? createImageFromImageData(p.image) : '',
+            }),
+            React.createElement('p', {
+              className: 'text-slate-900 text-lg font-semibold mt-2',
+            }, p.target, ' ', p.correct ? '✅' : '❌'),
+            // display the model that made the correct prediction
+            p.correct && p.output1 && p.output1.label === p.target && React.createElement('p', {
+              className: 'text-slate-600 text-base mt-1',
+            }, 'Predicted by: ', p.model1Name, ),
+            p.correct && p.output2 && p.output2.label === p.target && React.createElement('p', {
+              className: 'text-slate-600 text-base mt-1',
+            }, 'Predicted by: ', p.model2Name, )
+          )
+        )
+      ),
+      // buttons for play again and main menu
+      React.createElement('div', {
+        className: 'flex mt-6 gap-4',
+      },
+        // play again button
+        React.createElement('button', {
+          onClick: () => onClick(true),
+          type: 'button',
+          className: 'inline-flex items-center px-4 py-2 font-semibold leading-6 shadow rounded-md text-[#555555]',
+          style: { backgroundColor: '#ff9980' }, // set button color to slightly darker pastel orange
+        }, 'Play Again'),
+        // main menu button
+        React.createElement('button', {
+          onClick: () => onClick(false),
+          type: 'button',
+          className: 'inline-flex items-center px-4 py-2 font-semibold leading-6 shadow rounded-md text-[#555555]',
+          style: { backgroundColor: '#fffb91' }, // set button color to slightly darker pastel yellow
+        }, 'Main Menu')
+      )
     )
   );
 };

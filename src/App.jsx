@@ -9,6 +9,7 @@ import { AnimatePresence } from 'framer-motion';
 import PredictionChart from './components/PredictionChart';
 import Leaderboard from './components/Leaderboard';
 import { formatTime, shuffleArray, filterAndAdjustScores, createWorkers, startCountdown, startGame, endGame, goToNextWord, checkGameOver, checkWordGuessed, gameLoop, updateTableData } from './GameLogic';
+import { fetchLeaderboardData, updateLeaderboardData } from './dbLogic';
 
 function App() {
   // state variables
@@ -32,31 +33,59 @@ function App() {
   const [graphUpdateCount1, setGraphUpdateCount1] = useState(0);
   const [graphUpdateCount2, setGraphUpdateCount2] = useState(0);
   const [isLeaderboardVisible, setIsLeaderboardVisible] = useState(false);
+  const [modelColumn, setModelColumn] = useState([]);
+  const [eloColumn, setEloColumn] = useState([]);
+  const [avgTimeColumn, setAvgTimeColumn] = useState([]);
+  const [paramsColumn, setParamsColumn] = useState([]);
+  const [correctGuessesColumn, setCorrectGuessesColumn] = useState([]);
+  const [LeaderboardData, setLeaderboardData] = useState([]);
 
-  const initialLeaderboardData = constants.MODELPATHS.map((model, index) => [
-    index + 1, // rank
-    constants.MODELNAMEMAP[model], // model
-    1000, // elo
-    0, // avg time
-    constants.MODELPARAMS[model], // params
-    0, // correct guesses
-  ]);
+  const selectedModelsRef = useRef([]);
+  const worker1 = useRef(null);
+  const worker2 = useRef(null);
+  const canvasRef = useRef(null);
 
-  const [LeaderboardData, setLeaderboardData] = useState(initialLeaderboardData);
+  useEffect(() => {
+    // fetch leaderboard data on component mount
+    const fetchData = async () => {
+      let data = await fetchLeaderboardData();
+      // sort data by the highest ELO (assuming ELO is in the 4th column/index 3)
+      data = data.sort((a, b) => b[3] - a[3]);
+      setLeaderboardData(data);
+    };
+
+    fetchData();
+  }, []);
+
+  useEffect(() => {
+    // transform and set leaderboard data columns when data changes
+    if (LeaderboardData.length > 0) {
+      const columns = LeaderboardData[0].map((_, colIndex) =>
+        LeaderboardData.map(row => row[colIndex])
+      );
+      setModelColumn(columns[2]);
+      setEloColumn(columns[3]);
+      setAvgTimeColumn(columns[4].map(time => parseFloat(time)));
+      
+      // convert params column to actual numeric values
+      const paramsColumnNumeric = columns[5].map(param => {
+        const numericValue = parseFloat(param);
+        return isNaN(numericValue) ? 0 : numericValue * 1;
+      });
+      setParamsColumn(paramsColumnNumeric);
+      setCorrectGuessesColumn(columns[6]);
+    }
+  }, [LeaderboardData]);
 
   const initialModelStats = {
     correctGuessesModel1: 0,
     correctGuessesModel2: 0,
     lastPredictionTimeModel1: 0,
     lastPredictionTimeModel2: 0,
+    avgPredictionTimeModel1: 0,
+    avgPredictionTimeModel2: 0,
   };
-
   const [modelStats, setModelStats] = useState(initialModelStats);
-  
-  const selectedModelsRef = useRef([]);
-  const worker1 = useRef(null);
-  const worker2 = useRef(null);
-  const canvasRef = useRef(null);
 
   useEffect(() => {
     // select two random models from the modelPaths array
@@ -134,6 +163,7 @@ function App() {
   }, []);
 
   useEffect(() => {
+    // set ready state when both workers are ready
     if (worker1Ready && worker2Ready) {
       setReady(true);
       beginCountdown();
@@ -190,7 +220,11 @@ function App() {
   }, []);
 
   const handleEndGame = (cancelled = false) => {
-    endGame(setGameState, addPrediction, handleClearCanvas, cancelled, setLeaderboardData, modelStats, setModelStats, selectedModelsRef.current, LeaderboardData);
+    endGame(setGameState, addPrediction, handleClearCanvas, cancelled, (updatedLeaderboardData) => {
+      // sort updated leaderboard data by the highest ELO (assuming ELO is in the 4th column/index 3)
+      const sortedData = updatedLeaderboardData.sort((a, b) => b[3] - a[3]);
+      setLeaderboardData(sortedData);
+    }, modelStats, setModelStats, selectedModelsRef.current, LeaderboardData);
   };
 
   const handleClearCanvas = (resetTimeSpentDrawing = false) => {
@@ -240,13 +274,15 @@ function App() {
 
   useEffect(() => {
     if (gameState === 'countdown' && countdown <= 0) {
-      startGame(setGameStartTime, setPredictions, setGameState);
+      startGame(setGameStartTime, setPredictions, setGameState, setModelStats);
     }
   }, [gameState, countdown]);
 
   const addPrediction = useCallback(
     (isCorrect) => {
       const image = canvasRef.current.getCanvasData();
+      const model1Name = constants.MODELNAMEMAP[selectedModelsRef.current[0]];
+      const model2Name = constants.MODELNAMEMAP[selectedModelsRef.current[1]];
       setPredictions((prev) => [
         ...prev,
         {
@@ -255,6 +291,8 @@ function App() {
           image: image,
           correct: isCorrect,
           target: targets[targetIndex],
+          model1Name: model1Name,
+          model2Name: model2Name,
         },
       ]);
     },
@@ -262,7 +300,11 @@ function App() {
   );
 
   useEffect(() => {
-    checkGameOver(setGameState, gameState, gameCurrentTime, gameStartTime, endGame, setLeaderboardData, modelStats, setModelStats, addPrediction, handleClearCanvas, false, selectedModelsRef.current, LeaderboardData);
+    checkGameOver(setGameState, gameState, gameCurrentTime, gameStartTime, endGame, (updatedLeaderboardData) => {
+      // sort updated leaderboard data by the highest ELO (assuming ELO is in the 4th column/index 3)
+      const sortedData = updatedLeaderboardData.sort((a, b) => b[3] - a[3]);
+      setLeaderboardData(sortedData);
+    }, modelStats, setModelStats, addPrediction, handleClearCanvas, false, selectedModelsRef.current, LeaderboardData);
   }, [gameState, gameCurrentTime, gameStartTime, modelStats, selectedModelsRef, LeaderboardData]);
 
   useEffect(() => {
@@ -290,127 +332,208 @@ function App() {
   const countdownVisible = gameState === 'countdown';
   const gameOver = gameState === 'end';
 
-  const initialTableData = [
-    [1, 'MobileVIT-V2-1.0', 0, 10, '4.58M', '1000',],
-    [2, 'MobileVIT-V2-0.5', 0.6, 70.18, '1.37M', '1000'],
-    [3, 'MobileViT-XXS', 1.3, 69.03, '1.28M', '1000'],
-    [4, 'MobileVIT-XS', 2.3, 74.76, '2.33M', '1000'],
-    [5, 'MobileVIT-S', 5.6, 78.36, '5.59M', '1000'],
-    [6, 'CrossViT-15', 27.4, 81.95, '27.37M', '1000'],
-    [7, 'CrossViT-18', 43.2, 82.29, '43.21M', '1000'],
-  ];
-
-  // function to get a specific column
-  const getColumn = (data, colIndex) => data.map(row => row[colIndex]);
-
-  // extracting columns using the getColumn function
-  const col1 = getColumn(LeaderboardData, 0);
-  const col2 = getColumn(LeaderboardData, 1);
-  const col3 = getColumn(LeaderboardData, 2);
-  const col4 = getColumn(LeaderboardData, 3);
-  const col5 = getColumn(LeaderboardData, 4);
-  const col6 = getColumn(LeaderboardData, 5);
-
-  // new column names
-  const colNames = ['Rank', 'Model', 'ELO', 'Avg Time', 'Params'];
-
   const chartOptions = constants.chartOptionsArray.reduce((acc, chart) => {
     acc[chart.type] = chart.options;
     return acc;
   }, {});
 
-  return (
-    <>
-      {/* the canvas */}
-      <div className={`h-full w-full top-0 left-0 absolute ${isPlaying ? '' : 'pointer-events-none'}`}>
-        <SketchCanvas
-          onSketchChange={() => {
-            setSketchHasChanged(true);
-          }}
-          ref={canvasRef}
-        />
-      </div>
-
-      {/* the main menu */}
-      <AnimatePresence initial={false} mode='wait'>
-        {menuVisible && (
-          <Menu
-            gameState={gameState}
-            onClick={handleMainClick}
-            onLeaderboardClick={handleLeaderboardClick}
-          />
-        )}
-      </AnimatePresence>
-
-      {/* the countdown screen */}
-      <AnimatePresence initial={false} mode='wait'>
-        {countdownVisible && <Countdown countdown={countdown} />}
-      </AnimatePresence>
-
-      {/* the game over screen */}
-      <AnimatePresence initial={false} mode='wait'>
-        {gameOver && <GameOver predictions={predictions} onClick={handleGameOverClick} />}
-      </AnimatePresence>
-
-      {/* the leaderboard */}
-      <AnimatePresence initial={false} mode='wait'>
-        {isLeaderboardVisible && (
-          <Leaderboard
-            LeaderboardData={LeaderboardData}
-            colNames={constants.colNames}
-            tableStyleOptions={constants.tableStyleOptionsArray[0]}
-            chartOptions={chartOptions}
-            numGraphs={3}
-            onClose={handleLeaderboardClick}
-            barData={[col2, col3]}
-            barHData={[col2, col3]}
-            pieData={[col2, col4]}
-            donutData={[col2, col4]}
-            scatterData={[col3, col6]}
-            graphTypes={["bar", "barH", "scatter"]}
-          />
-        )}
-      </AnimatePresence>
-      {/* the game UI */}
-      {isPlaying && gameCurrentTime !== null && targets && (
-        <div className='absolute top-5 text-center'>
-          <h2 className='text-4xl'>Draw &quot;{targets[targetIndex]}&quot;</h2>
-          <h3 className='text-2xl'>
-            {formatTime(Math.max(constants.GAME_DURATION - (gameCurrentTime - gameStartTime) / 1000, 0))}
-          </h3>
-        </div>
-      )}
-      {/* the game controls */}
-      {isPlaying && (
-      <>
-      {/* displaying the prediction charts */}
-      <div className="absolute left-0 top-0">
-      <PredictionChart predictions={graphOutput1} i={1} />
-      </div>
-      <div className="absolute right-0 top-0">
-        <PredictionChart predictions={graphOutput2} i={2}/>
-      </div>
-      <div className="absolute bottom-5 text-center w-full">
-        {/* displaying the predictions in text*/}
-        <div className="flex justify-center gap-20 mb-5">
-          <div className="flex flex-col items-center justify-center w-1/4">
-            <h1 className="text-2xl font-bold text-center">{output1 && output1[0] && (<>{constants.MODELNAMEMAP[selectedModelsRef.current[0]]}<br />Prediction: {output1[0].label} ({(100 * output1[0].score).toFixed(1)}%)</>)}</h1>
-          </div>
-
-          <div className="flex flex-col items-center justify-center w-1/4">
-            <h1 className="text-2xl font-bold text-center">{output2 && output2[0] && (<>{constants.MODELNAMEMAP[selectedModelsRef.current[1]]}<br />Prediction: {output2[0].label} ({(100 * output2[0].score).toFixed(1)}%)</>)}</h1>
-          </div>
-        </div>
-        {/* buttons to handle clear, skip, and exit*/}
-        <div className="flex gap-4 justify-center">
-          <button className="px-6 py-2 bg-blue-200 text-[#555555] text-xl rounded-lg hover:bg-blue-300" onClick={handleClearCanvas}>Clear</button>
-          <button className="px-6 py-2 bg-green-200 text-[#555555] text-xl rounded-lg hover:bg-green-300" onClick={() => goToNextWord(addPrediction, setTargetIndex, setOutput1, setOutput2, setSketchHasChanged, handleClearCanvas, false, setGameStartTime)}>Skip</button>
-          <button className="px-6 py-2 bg-purple-200 text-[#555555] text-xl rounded-lg hover:bg-purple-300" onClick={() => handleEndGame(true)}>Exit</button>
-        </div>
-      </div>
-    </>
-  )}
-</>
-);
+  return React.createElement(
+    React.Fragment,
+    null,
+    React.createElement(
+      "div",
+      {
+        className: `h-full w-full top-0 left-0 absolute ${
+          isPlaying ? "" : "pointer-events-none"
+        }`,
+      },
+      React.createElement(SketchCanvas, {
+        onSketchChange: () => {
+          setSketchHasChanged(true);
+        },
+        ref: canvasRef,
+      })
+    ),
+    React.createElement(
+      AnimatePresence,
+      { initial: false, mode: "wait" },
+      menuVisible &&
+        React.createElement(Menu, {
+          gameState: gameState,
+          onClick: handleMainClick,
+          onLeaderboardClick: handleLeaderboardClick,
+        })
+    ),
+    React.createElement(
+      AnimatePresence,
+      { initial: false, mode: "wait" },
+      countdownVisible && React.createElement(Countdown, { countdown: countdown })
+    ),
+    React.createElement(
+      AnimatePresence,
+      { initial: false, mode: "wait" },
+      gameOver &&
+        React.createElement(GameOver, {
+          predictions: predictions,
+          onClick: handleGameOverClick,
+        })
+    ),
+    React.createElement(
+      AnimatePresence,
+      { initial: false, mode: "wait" },
+      isLeaderboardVisible &&
+        React.createElement(Leaderboard, {
+          LeaderboardData: LeaderboardData,
+          colNames: constants.colNames,
+          tableStyleOptions: constants.tableStyleOptionsArray[0],
+          chartOptions: chartOptions,
+          numGraphs: 3,
+          onClose: handleLeaderboardClick,
+          barData: [modelColumn, correctGuessesColumn],
+          barHData: [modelColumn, eloColumn],
+          pieData: [modelColumn, avgTimeColumn],
+          donutData: [modelColumn, avgTimeColumn],
+          scatterData: [paramsColumn, avgTimeColumn],
+          graphTypes: ["bar", "barH", "scatter"],
+        })
+    ),
+    isPlaying &&
+      gameCurrentTime !== null &&
+      targets &&
+      React.createElement(
+        "div",
+        { className: "absolute top-5 text-center" },
+        React.createElement(
+          "h2",
+          { className: "text-4xl" },
+          'Draw "',
+          targets[targetIndex],
+          '"'
+        ),
+        React.createElement(
+          "h3",
+          { className: "text-2xl" },
+          formatTime(
+            Math.max(
+              constants.GAME_DURATION - (gameCurrentTime - gameStartTime) / 1000,
+              0
+            )
+          )
+        )
+      ),
+    isPlaying &&
+      React.createElement(
+        React.Fragment,
+        null,
+        React.createElement(
+          "div",
+          { className: "absolute left-0 top-0" },
+          React.createElement(PredictionChart, {
+            predictions: graphOutput1,
+            i: 1,
+          })
+        ),
+        React.createElement(
+          "div",
+          { className: "absolute right-0 top-0" },
+          React.createElement(PredictionChart, {
+            predictions: graphOutput2,
+            i: 2,
+          })
+        ),
+        React.createElement(
+          "div",
+          { className: "absolute bottom-5 text-center w-full" },
+          React.createElement(
+            "div",
+            { className: "flex justify-center gap-20 mb-5" },
+            React.createElement(
+              "div",
+              { className: "flex flex-col items-center justify-center w-1/4" },
+              React.createElement(
+                "h1",
+                { className: "text-2xl font-bold text-center" },
+                output1 &&
+                  output1[0] &&
+                  React.createElement(
+                    React.Fragment,
+                    null,
+                    constants.MODELNAMEMAP[selectedModelsRef.current[0]],
+                    React.createElement("br", null),
+                    "Prediction: ",
+                    output1[0].label,
+                    " (",
+                    (100 * output1[0].score).toFixed(1),
+                    "%)"
+                  )
+              )
+            ),
+            React.createElement(
+              "div",
+              { className: "flex flex-col items-center justify-center w-1/4" },
+              React.createElement(
+                "h1",
+                { className: "text-2xl font-bold text-center" },
+                output2 &&
+                  output2[0] &&
+                  React.createElement(
+                    React.Fragment,
+                    null,
+                    constants.MODELNAMEMAP[selectedModelsRef.current[1]],
+                    React.createElement("br", null),
+                    "Prediction: ",
+                    output2[0].label,
+                    " (",
+                    (100 * output2[0].score).toFixed(1),
+                    "%)"
+                  )
+              )
+            )
+          ),
+          React.createElement(
+            "div",
+            { className: "flex gap-4 justify-center" },
+            React.createElement(
+              "button",
+              {
+                className:
+                  "px-6 py-2 bg-blue-200 text-[#555555] text-xl rounded-lg hover:bg-blue-300",
+                onClick: handleClearCanvas,
+              },
+              "Clear"
+            ),
+            React.createElement(
+              "button",
+              {
+                className:
+                  "px-6 py-2 bg-green-200 text-[#555555] text-xl rounded-lg hover:bg-green-300",
+                onClick: () =>
+                  goToNextWord(
+                    addPrediction,
+                    setTargetIndex,
+                    setOutput1,
+                    setOutput2,
+                    setSketchHasChanged,
+                    handleClearCanvas,
+                    false,
+                    setGameStartTime
+                  ),
+              },
+              "Skip"
+            ),
+            React.createElement(
+              "button",
+              {
+                className:
+                  "px-6 py-2 bg-purple-200 text-[#555555] text-xl rounded-lg hover:bg-purple-300",
+                onClick: () => handleEndGame(true),
+              },
+              "Exit"
+            )
+          )
+        )
+      )
+  );
 }
+
 export default App;

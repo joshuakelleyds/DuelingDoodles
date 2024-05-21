@@ -37,12 +37,13 @@ const dropIn = {
 const Model = () => {
   // create a memoized draco loader instance for decompressing the model
   const dracoLoader = useMemo(() => {
+    // draco is a lightweight threejs loader
     const loader = new DRACOLoader();
     loader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.7/');
     return loader;
   }, []);
 
-  // load the gltf model using the gltf loader and draco loader
+  // load the gltf model using the gltf loader 
   const gltf = useLoader(GLTFLoader, doodlebobModel, (loader) => {
     loader.setDRACOLoader(dracoLoader);
   });
@@ -134,7 +135,7 @@ const Menu = ({ onClick, gameState, onLeaderboardClick }) => {
           className: 'sm:text-7xl text-7xl mb-4 font-extrabold tracking-tight text-slate-900 text-center',
           key: 'title',
         },
-        'Dueling Doodles'
+        'Dueling Doodles!'
       ),
       // render subtitle
       React.createElement(
@@ -143,7 +144,7 @@ const Menu = ({ onClick, gameState, onLeaderboardClick }) => {
           className: 'sm:text-2xl text-2xl mb-10 font-semibold text-slate-900', // Reduced margin-bottom to mb-2
           key: 'subtitle',
         },
-        'Benchmarking Lightweight Vision Models through your doodles'
+        'Benchmarking Lightweight Vision AI through Sketch Recognition'
       ),
       // render play button
       React.createElement(
