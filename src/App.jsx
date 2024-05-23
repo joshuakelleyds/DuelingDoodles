@@ -10,6 +10,8 @@ import PredictionChart from './components/PredictionChart';
 import Leaderboard from './components/Leaderboard';
 import { formatTime, shuffleArray, filterAndAdjustScores, createWorkers, startCountdown, startGame, endGame, goToNextWord, checkGameOver, checkWordGuessed, gameLoop, updateTableData } from './GameLogic';
 import { fetchLeaderboardData, updateLeaderboardData } from './dbLogic';
+import { mobileTabletCheck } from './utils';
+
 
 function App() {
   // state variables
@@ -44,6 +46,7 @@ function App() {
   const worker1 = useRef(null);
   const worker2 = useRef(null);
   const canvasRef = useRef(null);
+  const isMobile = mobileTabletCheck();
 
   useEffect(() => {
     // fetch leaderboard data on component mount
@@ -220,12 +223,29 @@ function App() {
   }, []);
 
   const handleEndGame = (cancelled = false) => {
-    endGame(setGameState, addPrediction, handleClearCanvas, cancelled, (updatedLeaderboardData) => {
-      // sort updated leaderboard data by the highest ELO (assuming ELO is in the 4th column/index 3)
-      const sortedData = updatedLeaderboardData.sort((a, b) => b[3] - a[3]);
-      setLeaderboardData(sortedData);
-    }, modelStats, setModelStats, selectedModelsRef.current, LeaderboardData);
-  };
+    endGame(
+      setGameState, 
+      addPrediction, 
+      handleClearCanvas, 
+      cancelled, 
+      (updatedLeaderboardData) => {
+        // sort updated leaderboard data by the highest ELO (assuming ELO is in the 4th column/index 3)
+        const sortedData = updatedLeaderboardData.sort((a, b) => b[3] - a[3]);
+  
+        // update ranks in the first column (index 0)
+        const rankedData = sortedData.map((entry, index) => {
+          entry[1] = index + 1; // assuming entry[0] is the rank column
+          return entry;
+        });
+  
+        setLeaderboardData(rankedData);
+      }, 
+      modelStats, 
+      setModelStats, 
+      selectedModelsRef.current, 
+      LeaderboardData
+    );
+  };  
 
   const handleClearCanvas = (resetTimeSpentDrawing = false) => {
     if (canvasRef.current) {
@@ -529,6 +549,56 @@ function App() {
                 onClick: () => handleEndGame(true),
               },
               "Exit"
+            )
+          )
+        )
+      ),
+      menuVisible && (
+        React.createElement(
+          React.Fragment,
+          null,
+          !isMobile && React.createElement(
+            'div',
+            {
+              className: 'absolute bottom-4 right-1/4 transform translate-x-1/2 text-center px-4 w-full sm:w-auto text-xs sm:text-base',
+            },
+            'All models run locally thanks to ',
+            React.createElement(
+              'a',
+              {
+                className: 'underline',
+                href: 'https://github.com/xenova/transformers.js',
+              },
+              '🤗 Transformers.js'
+            )
+          ),
+          isMobile ? React.createElement(
+            'div',
+            {
+              className: 'absolute bottom-1 left-1/2 transform -translate-x-1/2 text-center px-4 w-full text-xs',
+            },
+            'Hi, I\'m Josh and I like building ',
+            React.createElement(
+              'a',
+              {
+                className: 'underline',
+                href: 'https://joshuakelley.netlify.app',
+              },
+              'Stuff'
+            )
+          ) : React.createElement(
+            'div',
+            {
+              className: 'absolute bottom-4 left-1/4 transform -translate-x-1/2 text-center px-4 w-full sm:w-auto text-xs sm:text-base',
+            },
+            'Hi, I\'m Josh and I like building ',
+            React.createElement(
+              'a',
+              {
+                className: 'underline',
+                href: 'https://joshuakelley.netlify.app',
+              },
+              'Stuff'
             )
           )
         )

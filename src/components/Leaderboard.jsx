@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { Typography, Box, Paper } from '@mui/material';
+import { Typography, Box } from '@mui/material';
 import Rough from 'roughjs/bundled/rough.esm';
 import { Bar, BarH, Scatter, Pie, Donut } from 'react-roughviz';
 import { mobileTabletCheck } from '../utils';
@@ -48,8 +48,8 @@ const Leaderboard = ({
   // calculate the table dimensions based on the device type
   const [tableWidth, tableHeight] = useMemo(() => {
     // set width and height based on device type (mobile or desktop)
-    const width = isMobile ? Math.min(window.innerWidth * 0.9, 500) : Math.floor(window.innerWidth * 0.6);
-    const height = isMobile ? Math.min(window.innerHeight * 0.7, 500) : Math.floor(window.innerHeight * 0.8);
+    const width = isMobile ? Math.min(window.innerWidth * 1.5, 800) : Math.floor(window.innerWidth * 0.6);
+    const height = isMobile ? Math.min(window.innerHeight * 1.5, 800) : Math.floor(window.innerHeight * 0.8);
     return [width, height];
   }, [isMobile]);
 
@@ -130,14 +130,14 @@ const Leaderboard = ({
 
     const headerFontSize = isMobile
       ? isLandscape
-        ? '3.5vw'
-        : '8vw'
-      : `${Math.min(Math.floor(cellHeight * 0.08), Math.floor(Math.min(...columnWidths) * 0.08))}vmin`; // calculate the font size for headers
+        ? '1.75vw'
+        : '4vw'
+      : `${Math.min(Math.floor(cellHeight * 0.05), Math.floor(Math.min(...columnWidths) * 0.05))}vmin`; // calculate the font size for headers
     const cellFontSize = isMobile
       ? isLandscape
-        ? '3.5vw'
-        : '8vw'
-      : `${Math.min(Math.floor(cellHeight * 0.07), Math.floor(Math.min(...columnWidths) * 0.07))}vmin`; // calculate the font size for cells
+        ? '1.75vw'
+        : '4vw'
+        : `${Math.min(Math.floor(cellHeight * 0.05), Math.floor(Math.min(...columnWidths) * 0.05))}vmin`; // calculate the font size for cells
 
     const headerColors = tableStyleOptions.headerColors || [
       '#e3968e', '#91a6bc', '#a8c6a0', '#b8a3bb', '#e6b87d',
@@ -241,7 +241,7 @@ const Leaderboard = ({
       const graphOptions = {
         ...(chartOptions[graphType] || {}),
         labels: { show: true, fontSize: '1rem', fontFamily: 'Virgil', color: 'grey' },
-        margin: { top: 40, right: 40, bottom: 80, left: 150 }, // add margin to prevent labels from getting cut off
+        margin: { top: 100, right: 40, bottom: 80, left: 150 }, // add margin to prevent labels from getting cut off
       };
 
       const commonProps = {
@@ -249,12 +249,10 @@ const Leaderboard = ({
         labels: 'labels',
         values: 'values',
         ...graphOptions,
-        width: isMobile ? Math.floor(window.innerWidth * 0.9) : Math.floor(window.innerWidth * 0.35),
-        height: isMobile
-          ? Math.floor(window.innerHeight * 0.5 / numGraphs)
-          : Math.floor(window.innerHeight * 0.7 / numGraphs),
+        width: 400,  // Fixed width
+        height: 300, // Fixed height
         font: 'Virgil',
-        style: { marginBottom: '20px' },
+        style: { marginTop: '20px' },
       };
 
       switch (graphType) {
@@ -275,7 +273,7 @@ const Leaderboard = ({
       console.error(`Error rendering ${graphType} graph:`, error); // log the error
       return null; // return null if an error occurs
     }
-  }, [isMobile, numGraphs, chartOptions]);
+  }, [chartOptions]);
 
   /**
    * helper function to get the data based on the graph type
@@ -300,73 +298,171 @@ const Leaderboard = ({
   };
 
   // create and return the leaderboard component
-  return React.createElement(motion.div, {
-    initial: { opacity: 0, scale: 0.8 }, 
-    animate: { opacity: 1, scale: 1 }, 
-    exit: { opacity: 0, scale: 0.8 }, 
-    transition: { duration: 0.3 },
-    className: "fixed top-0 left-0 w-full h-full flex justify-center items-center bg-white z-50"
-  }, React.createElement(Paper, {
-    elevation: 3,
-    style: {
-      position: 'relative',
-      borderRadius: '42px',
-      padding: isMobile ? '20px' : '40px',
-      boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.1)',
-      backgroundColor: '#f5f5f5',
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      width: isMobile ? '95%' : '95%',
-      maxHeight: isMobile ? '100vh' : '100vh',
-      margin: '0 auto',
-    }
-  }, React.createElement(Box, {
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    mb: 2,
-    width: "100%"
-  }, React.createElement(Typography, {
-    variant: "h4",
-    component: "div",
-    fontFamily: "Virgil",
-    style: {
-      fontSize: isMobile ? 'min(6vw, 6vh)' : 'min(5vw, 5vh)',
+  return React.createElement(
+    motion.div,
+    {
+      initial: { opacity: 0, scale: 0.8 },
+      animate: { opacity: 1, scale: 1 },
+      exit: { opacity: 0, scale: 0.8 },
+      transition: { duration: 0.3 },
+      style: {
+        position: 'fixed',
+        top: 50,
+        left: 0,
+        width: '100%',
+        height: '100%',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: 'rgba(255, 255, 255, 0.8)',
+        zIndex: 9999,
+      },
     },
-    textAlign: "center"
-  }, "Leaderboard")), React.createElement("div", {
-    style: {
-      display: 'flex',
-      flexDirection: isMobile ? 'column' : 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      width: '100%',
-      gap: isMobile ? '20px' : '20px',
-    }
-  }, React.createElement("canvas", {
-    ref: tableCanvasRef,
-    style: { marginLeft: '0%', width: isMobile ? '100%' : '50%', height: isMobile ? '60vh' : 'auto' }
-  }), !isMobile && React.createElement("div", {
-    style: {
-      width: '50%',
-      display: 'flex',
-      flexDirection: 'column',
-      justifyContent: 'flex-start',
-      alignItems: 'center',
-      gap: '5px',
-    }
-  }, graphTypes.map((graphType) => React.createElement("div", { key: graphType }, renderGraph(graphType, getGraphData(graphType)))))), React.createElement("button", {
-    onClick: onClose,
-    type: "button",
-    className: "inline-flex items-center px-4 py-2 font-bold leading-6 shadow rounded-full text-white bg-gray-400 hover:bg-gray-300 transition ease-in-out duration-150",
-    style: {
-      position: 'absolute',
-      bottom: '10px',
-      right: '10x',
-      fontSize: 'min(2vw, 2vh)',
-    }
-  }, "Close")));
- };
- 
- export default Leaderboard;
+    React.createElement(
+      'div',
+      {
+        style: {
+          position: 'relative',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          width: '90%',
+          height: '90%', // Adjusted height to accommodate the fixed button
+          margin: '10px auto',
+          overflowY: 'auto',
+        },
+      },
+      React.createElement(
+        Box,
+        {
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          mb: 2,
+          width: '100%',
+        },
+        React.createElement(
+          Typography,
+          {
+            variant: 'h4',
+            component: 'div',
+            fontFamily: 'Virgil',
+            style: {
+              fontSize: isMobile ? 'min(6vw, 6vh)' : 'min(5vw, 5vh)',
+            },
+            textAlign: 'center',
+          },
+          'Leaderboard'
+        )
+      ),
+      React.createElement(
+        'div',
+        {
+          style: {
+            display: 'flex',
+            flexDirection: isMobile ? 'column' : 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            width: '100%',
+            height: '100%',
+            gap: '20px',
+          },
+        },
+        React.createElement(
+          'div',
+          {
+            style: {
+              width: isMobile ? '100%' : '50%',
+              height: isMobile ? '100%' : '100%',
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              overflow: 'auto',
+            },
+          },
+          React.createElement(
+            'div',
+            {
+              style: {
+                display: 'flex',
+                overflow: isMobile ? 'auto' : 'hidden',
+                maxWidth: '100%',
+                maxHeight: '100%',
+              },
+            },
+            React.createElement('canvas', {
+              ref: tableCanvasRef,
+              style: {
+                width: isMobile ? 'auto' : '100%',
+                height: isMobile ? 'auto' : '100%',
+                objectFit: 'contain',
+                imageRendering: 'pixelated',
+              },
+            })
+          )
+        ),
+        !isMobile &&
+          React.createElement(
+            'div',
+            {
+              style: {
+                width: '50%',
+                height: '90%',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                alignItems: 'center',
+                gap: '20px',
+              },
+            },
+            graphTypes.map((graphType) =>
+              React.createElement(
+                'div',
+                {
+                  key: graphType,
+                  style: {
+                    width: '100%',
+                    display: 'flex',
+                    justifyContent: 'center',
+                    paddingTop: '20px',
+                  },
+                },
+                renderGraph(graphType, getGraphData(graphType))
+              )
+            )
+          )
+      ),
+      React.createElement(
+        'button',
+        {
+          onClick: onClose,
+          type: 'button',
+          style: {
+            position: 'fixed',
+            bottom: '10px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            fontSize: 'min(2vw, 2vh)',
+            padding: '8px 16px',
+            fontWeight: 'bold',
+            textShadow: '0 1px 1px rgba(0, 0, 0, 0.2)',
+            borderRadius: '9999px',
+            color: '#fff',
+            backgroundColor: '#6b7280',
+            transition: 'background-color 150ms ease-in-out',
+            cursor: 'pointer',
+          },
+          onMouseEnter: (e) => {
+            e.target.style.backgroundColor = '#4b5563';
+          },
+          onMouseLeave: (e) => {
+            e.target.style.backgroundColor = '#6b7280';
+          },
+        },
+        'Close'
+      )
+    )
+  );
+};
+
+export default Leaderboard;
