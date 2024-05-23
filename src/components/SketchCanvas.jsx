@@ -6,18 +6,35 @@ const START_DRAW_EVENTS = ['mousedown', 'touchstart'];
 const DRAW_EVENTS = ['mousemove', 'touchmove'];
 const STOP_DRAW_EVENTS = ['mouseup', 'mouseout', 'touchend'];
 
-const THROTTLE_MS = 15;
+const THROTTLE_MS = 5;
 const CANVAS_SIZE = Math.max(window.screen.width, window.screen.height);
 const SKETCH_PADDING = 2;
 
+/**
+ * adds event listeners to an element
+ * @param {HTMLElement} item - the element to add event listeners to
+ * @param {string[]} events - array of event names to listen for
+ * @param {Function} fn - the event handler function
+ */
 function addEventListeners(item, events, fn) {
   events.forEach(event => item.addEventListener(event, fn));
 }
 
+/**
+ * removes event listeners from an element
+ * @param {HTMLElement} item - the element to remove event listeners from
+ * @param {string[]} events - array of event names to remove
+ * @param {Function} fn - the event handler function
+ */
 function removeEventListeners(item, events, fn) {
   events.forEach(event => item.removeEventListener(event, fn));
 }
 
+/**
+ * gets the position of a mouse or touch event
+ * @param {Event} event - the event object
+ * @returns {number[]} array containing the x and y coordinates
+ */
 function getPosition(event) {
   if (event.touches && event.touches[0]) {
     const diff = (event.target.offsetHeight - document.body.offsetHeight) / 2;
@@ -27,6 +44,14 @@ function getPosition(event) {
   }
 }
 
+/**
+ * SketchCanvas component for drawing on a canvas element
+ * @param {Object} props - the component props
+ * @param {Function} props.onSketchChange - callback function when the sketch changes
+ * @param {boolean} props.disabled - whether the canvas is disabled for drawing
+ * @param {Object} ref - the ref object to expose methods to parent components
+ * @returns {JSX.Element} the canvas element
+ */
 function SketchCanvas({ onSketchChange, disabled }, ref) {
   const canvasRef = useRef(null);
   const contextRef = useRef(null);
@@ -45,7 +70,7 @@ function SketchCanvas({ onSketchChange, disabled }, ref) {
     context.lineWidth = constants.BRUSH_SIZE;
     context.lineJoin = 'round';
     context.lineCap = 'round';
-    context.strokeStyle = 'black';
+    context.strokeStyle = '#36454F';
     context.shadowColor = 'rgba(0, 0, 0, 0.9)';
     context.shadowBlur = 1;
 
@@ -53,11 +78,18 @@ function SketchCanvas({ onSketchChange, disabled }, ref) {
     const paddingTop = (canvas.height - window.innerHeight) / 2;
     const brushRadius = constants.BRUSH_SIZE / 2;
 
+    /**
+     * handles window resize event to adjust canvas size
+     */
     function handleResize() {
       canvas.style.width = window.innerWidth;
       canvas.style.height = window.innerHeight;
     }
 
+    /**
+     * starts drawing on the canvas
+     * @param {Event} event - the event object
+     */
     function startDrawing(event) {
       if (disabled) return;
 
@@ -84,6 +116,10 @@ function SketchCanvas({ onSketchChange, disabled }, ref) {
       onSketchChange();
     }
 
+    /**
+     * draws on the canvas
+     * @param {Event} event - the event object
+     */
     const draw = throttle(function(event) {
       if (!isDrawing || disabled) return;
 
@@ -111,6 +147,9 @@ function SketchCanvas({ onSketchChange, disabled }, ref) {
       onSketchChange();
     }, THROTTLE_MS);
 
+    /**
+     * stops drawing on the canvas
+     */
     function stopDrawing() {
       setIsDrawing(false);
     }
@@ -129,6 +168,10 @@ function SketchCanvas({ onSketchChange, disabled }, ref) {
     };
   }, [isDrawing, onSketchChange, disabled]);
 
+  /**
+   * gets the current canvas data
+   * @returns {ImageData|null} the image data from the canvas, or null if no sketch
+   */
   function getCanvasData() {
     if (sketchBoundingBox === null) return null;
 
@@ -158,6 +201,10 @@ function SketchCanvas({ onSketchChange, disabled }, ref) {
     return imgData;
   }
 
+  /**
+   * clears the canvas
+   * @param {boolean} resetTimeSpentDrawing - whether to reset the drawing time
+   */
   function clearCanvas(resetTimeSpentDrawing = false) {
     setSketchBoundingBox(null);
     const canvas = canvasRef.current;

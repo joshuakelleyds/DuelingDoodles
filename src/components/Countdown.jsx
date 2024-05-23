@@ -48,7 +48,7 @@ const Countdown = ({ countdown }) => {
       animate: 'visible',
       variants: dropIn,
       exit: "exit",
-      className: 'pointer-events-none absolute w-full h-full flex justify-center items-center',
+      className: 'pointer-events-none absolute w-full h-full flex justify-center items-center text-[#555555]',
     },
     React.createElement(
       'h1',
