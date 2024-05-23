@@ -132,12 +132,12 @@ const Leaderboard = ({
       ? isLandscape
         ? '1.75vw'
         : '4vw'
-      : `${Math.min(Math.floor(cellHeight * 0.05), Math.floor(Math.min(...columnWidths) * 0.05))}vmin`; // calculate the font size for headers
+      : `${Math.min(Math.floor(cellHeight * 0.06), Math.floor(Math.min(...columnWidths) * 0.06))}vmin`; // calculate the font size for headers
     const cellFontSize = isMobile
       ? isLandscape
         ? '1.75vw'
         : '4vw'
-        : `${Math.min(Math.floor(cellHeight * 0.05), Math.floor(Math.min(...columnWidths) * 0.05))}vmin`; // calculate the font size for cells
+        : `${Math.min(Math.floor(cellHeight * 0.06), Math.floor(Math.min(...columnWidths) * 0.06))}vmin`; // calculate the font size for cells
 
     const headerColors = tableStyleOptions.headerColors || [
       '#e3968e', '#91a6bc', '#a8c6a0', '#b8a3bb', '#e6b87d',
@@ -249,10 +249,9 @@ const Leaderboard = ({
         labels: 'labels',
         values: 'values',
         ...graphOptions,
-        width: 400,  // Fixed width
-        height: 300, // Fixed height
         font: 'Virgil',
-        style: { marginTop: '20px' },
+        height: 400,
+        width: 600,
       };
 
       switch (graphType) {
@@ -307,7 +306,7 @@ const Leaderboard = ({
       transition: { duration: 0.3 },
       style: {
         position: 'fixed',
-        top: 50,
+        top: 0,
         left: 0,
         width: '100%',
         height: '100%',
@@ -327,8 +326,7 @@ const Leaderboard = ({
           flexDirection: 'column',
           alignItems: 'center',
           width: '90%',
-          height: '90%', // Adjusted height to accommodate the fixed button
-          margin: '10px auto',
+          height: '95%', // Adjusted height to accommodate the fixed button
           overflowY: 'auto',
         },
       },
@@ -413,6 +411,7 @@ const Leaderboard = ({
                 justifyContent: 'center',
                 alignItems: 'center',
                 gap: '20px',
+                marginTop: '600px', // Add a top margin
               },
             },
             graphTypes.map((graphType) =>
@@ -421,10 +420,9 @@ const Leaderboard = ({
                 {
                   key: graphType,
                   style: {
-                    width: '100%',
                     display: 'flex',
                     justifyContent: 'center',
-                    paddingTop: '20px',
+                    paddingTop: '40px',
                   },
                 },
                 renderGraph(graphType, getGraphData(graphType))
