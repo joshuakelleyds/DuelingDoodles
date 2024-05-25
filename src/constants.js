@@ -27,7 +27,7 @@ export default {
   BRUSH_SIZE: IS_MOBILE ? 10 : 13,
   TARGET_FPS: 60,
   GAME_DURATION: 30 + 0.5, // + 0.5 so it doesn't flicker (TODO: change to 60)
-  COUNTDOWN_TIMER: 3,
+  COUNTDOWN_TIMER: 5,
   START_REJECT_THRESHOLD: 0.2, // How confident the model should be before starting to reject
   REJECT_TIME_DELAY: 3 * 1000, // How many ms to wait before helping
   REJECT_TIME_PER_LABEL: 3 * 1000, // How many ms to reject a label for after it's been drawn
@@ -395,8 +395,8 @@ export default {
     "JoshuaKelleyDs/quickdraw-DeiT-tiny-finetune": "DeiT-Tiny",
     "JoshuaKelleyDs/quickdraw-MobileVITV2-2.0-Finetune": "MobileVIT-V2-2.0",
     "JoshuaKelleyDs/quickdraw-MobileVITV2-1.0-Finetune": "MobileVIT-V2-1.0",
-    "JoshuaKelleyDs/quickdraw-ConvNeXT-Tiny-Finetune": "ConvNeXT-Tiny",
-    "JoshuaKelleyDs/quickdraw-ConvNeXTV2-Tiny-Finetune": "ConvNeXTV2-Tiny",
+    "JoshuaKelleyDs/quickdraw-ConvNeXT-Tiny-Finetune": "ConvNeXT-V1-Tiny",
+    "JoshuaKelleyDs/quickdraw-ConvNeXTV2-Tiny-Finetune": "ConvNeXT-V2-Tiny",
   },
   MODELPARAMS: {
     "JoshuaKelleyDs/quickdraw-MobileVIT-small-finetune": "5.17M",

@@ -332,7 +332,14 @@ export const updateTableData = (modelStats, selectedModels, LeaderboardData) => 
   const model2 = selectedModels[1];
 
   const calculateElo = (currentElo, opponentElo, score) => {
-    const K = 32;
+    let K;
+    if (currentElo < 2100) {
+      K = 32;  // use higher k-factor for less experienced players
+    } else if (currentElo >= 2100 && currentElo < 2400) {
+      K = 24;  // medium k-factor for moderately experienced players
+    } else {
+      K = 16;  // lower k-factor for highly experienced players
+    }
     const expectedScore = 1 / (1 + Math.pow(10, (opponentElo - currentElo) / 400));
     return Math.floor(currentElo + K * (score - expectedScore));
   };

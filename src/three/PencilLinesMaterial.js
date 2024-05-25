@@ -51,9 +51,9 @@ const fragmentShader = `
     vec3 color2 = vec3(0.6, 0.7, 0.9); // Lighter Blue
     vec3 color3 = vec3(0.2, 0.4, 0.6); // Darker Blue
 
-    float noise1 = fract(sin(dot(uv, vec2(12.9898, 78.233))) * 400.0);
-    float noise2 = fract(sin(dot(uv + vec2(0.5, 0.5), vec2(12.9898, 78.233))) * 4.0);
-    float noise3 = fract(sin(dot(uv + vec2(1.0, 1.0), vec2(12.9898, 78.233))) * 0.8);
+    float noise1 = fract(sin(dot(uv, vec2(12.9898, 78.233))) * 10.0);
+    float noise2 = fract(sin(dot(uv + vec2(0.5, 0.5), vec2(12.9898, 78.233))) * 10.0);
+    float noise3 = fract(sin(dot(uv + vec2(1.0, 1.0), vec2(12.9898, 78.233))) * 10.0);
 
     vec3 watercolor = mix(color1, color2, noise1);
     watercolor = mix(watercolor, color3, noise2);

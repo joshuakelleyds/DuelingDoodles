@@ -166,12 +166,12 @@ function App() {
   }, []);
 
   useEffect(() => {
-    // set ready state when both workers are ready
     if (worker1Ready && worker2Ready) {
       setReady(true);
-      beginCountdown();
+      beginCountdown(); // Start the countdown when both workers are ready
     }
   }, [worker1Ready, worker2Ready]);
+  
 
   // update graph outputs every 10 changes or 2 seconds
   useEffect(() => {
@@ -254,6 +254,7 @@ function App() {
   };
 
   const beginCountdown = () => {
+    setCountdown(constants.COUNTDOWN_TIMER); // Reset the countdown timer state
     startCountdown(setCountdown, setGameState);
     // generate possible labels for the game
     const possibleLabels = Object.values(constants.LABELS).filter(
@@ -265,6 +266,7 @@ function App() {
     setTargets(possibleLabels);
     setTargetIndex(0);
   };
+  
 
   const handleMainClick = () => {
     if (!ready) {
@@ -276,7 +278,7 @@ function App() {
       // if ready, begin the countdown
       beginCountdown();
     }
-  };
+  };  
 
   const handleLeaderboardClick = () => {
     setIsLeaderboardVisible((prevState) => !prevState);
@@ -291,7 +293,7 @@ function App() {
       handleEndGame(true);
     }
   };
-
+  
   useEffect(() => {
     if (gameState === 'countdown' && countdown <= 0) {
       startGame(setGameStartTime, setPredictions, setGameState, setModelStats);
@@ -568,6 +570,7 @@ function App() {
               {
                 className: 'underline',
                 href: 'https://github.com/xenova/transformers.js',
+                target: '_blank',
               },
               '🤗 Transformers.js'
             )
@@ -577,15 +580,12 @@ function App() {
             {
               className: 'absolute bottom-1 left-1/2 transform -translate-x-1/2 text-center px-4 w-full text-xs',
             },
-            'Hi, I\'m Josh and I like building ',
-            React.createElement(
-              'a',
-              {
-                className: 'underline',
-                href: 'https://joshuakelley.netlify.app',
-              },
-              'Stuff'
-            )
+            'All models run locally thanks to ',
+            React.createElement('a', {
+              className: 'underline',
+              href: 'https://github.com/xenova/transformers.js',
+              target: '_blank',
+            }, '🤗 Transformers.js')
           ) : React.createElement(
             'div',
             {
@@ -597,6 +597,7 @@ function App() {
               {
                 className: 'underline',
                 href: 'https://joshuakelley.netlify.app',
+                target: '_blank',
               },
               'Stuff'
             )

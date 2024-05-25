@@ -155,7 +155,7 @@ const Leaderboard = ({
         fillStyle: 'hachure',
         fillWeight: 10,
         hachureAngle: 30,
-        roughness: 3,
+        roughness: 5,
         bowing: 1,
         stroke: 'grey',
         strokeWidth: 3,
@@ -177,10 +177,10 @@ const Leaderboard = ({
         roughCanvas.rectangle(currentX, y, cellWidth, cellHeight, {
           fill: cellColor,
           fillStyle: 'solid',
-          roughness: 2,
+          roughness: 5,
           bowing: 1,
           stroke: 'grey',
-          strokeWidth: 2,
+          strokeWidth: 4,
         }); // draw the data cell rectangle with a hand-drawn effect
         tableCtx.font = `${cellFontSize} Virgil`;
         tableCtx.fillStyle = 'grey';
@@ -458,6 +458,29 @@ const Leaderboard = ({
           },
         },
         'Close'
+      ),
+      !isMobile && React.createElement(
+        'div',
+        {
+          className: 'absolute bottom-4 left-1/4 transform -translate-x-1/2 text-center px-4 w-full sm:w-auto text-xxs sm:text-xxs',
+        },
+        'All models hosted on ',
+        React.createElement(
+          'a',
+          {
+            className: 'underline',
+            href: 'https://huggingface.co/JoshuaKelleyDs',
+            target: '_blank',
+          },
+          '🤗 Hugging Face'
+        ),
+      ),
+      !isMobile && React.createElement(
+        'div',
+        {
+          className: 'absolute top-20 left-1/2 transform -translate-x-1/2 text-center px-3 w-full sm:w-auto text-xxs sm:text-xxs',
+        },
+        '(This is a fun project... Please don\'t take this too serious!!!)',
       )
     )
   );
